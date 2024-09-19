@@ -1,4 +1,3 @@
-version: '3'
 services:
   cassandra-node1:
     image: cassandra:latest
@@ -8,26 +7,10 @@ services:
     environment:
       - CASSANDRA_CLUSTER_NAME=interview-service
       - CASSANDRA_SEEDS=cassandra-node1
+      - HEAP_NEWSIZE=400M
+      - MAX_HEAP_SIZE=1G
     ports:
       - "9042:9042"
-
-  cassandra-node2:
-    image: cassandra:latest
-    container_name: cassandra-node2
-    networks:
-      - cassandra-network
-    environment:
-      - CASSANDRA_CLUSTER_NAME=interview-service
-      - CASSANDRA_SEEDS=cassandra-node1
-
-  cassandra-node3:
-    image: cassandra:latest
-    container_name: cassandra-node3
-    networks:
-      - cassandra-network
-    environment:
-      - CASSANDRA_CLUSTER_NAME=interview-service
-      - CASSANDRA_SEEDS=cassandra-node1
 
 networks:
   cassandra-network:

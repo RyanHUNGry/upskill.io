@@ -3,6 +3,7 @@ module ryhung.upskill.io
 go 1.22.5
 
 require (
+	github.com/brianvoe/gofakeit/v7 v7.0.4 // indirect
 	github.com/gocql/gocql v1.6.0 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect

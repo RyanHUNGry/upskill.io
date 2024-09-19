@@ -21,7 +21,9 @@ func InitializeInterviewServiceDatabase(ctx context.Context) *InterviewServiceDa
 		panic(err)
 	}
 	db := &InterviewServiceDatabase{session: keyspaceInitializationSession, databaseContext: ctx}
+
 	err = db.session.Query("SELECT now() FROM system.local;").WithContext(ctx).Exec() // connection test query
+
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +46,7 @@ func InitializeInterviewServiceDatabase(ctx context.Context) *InterviewServiceDa
 	// Create tables
 	db.initializeTables()
 
-	fmt.Print("Cassandra database connected ✅ ")
+	fmt.Print("Cassandra database ready ✅")
 	return db
 }
 

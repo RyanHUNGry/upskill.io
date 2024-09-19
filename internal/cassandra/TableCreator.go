@@ -22,12 +22,21 @@ func (db *InterviewServiceDatabase) initializeKeyspace() {
 
 // Depending on stage/cluster setup, alter table settings
 func (db *InterviewServiceDatabase) initializeTables() {
-	for _, queryString := range schemas {
-		err := db.session.Query(queryString).WithContext(db.databaseContext).Exec()
-		if err != nil {
-			panic(err)
-		}
-	}
+	stage := os.Getenv("STAGE")
 
-	// implement seeding logic for test/dev env
+	switch stage {
+	case "dev":
+		// insert tables
+		for _, queryString := range schemas {
+			err := db.session.Query(queryString).WithContext(db.databaseContext).Exec()
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		// insert seed data
+		db.seedDatabase()
+	default:
+		panic("Unknown stage")
+	}
 }
