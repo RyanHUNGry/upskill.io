@@ -18,4 +18,4 @@ Local machine allocates 8GB for docker, so try 1GB per container:
 - MAX_HEAP_SIZE="1G"
 - HEAP_NEWSIZE="400M"
 
-Use a single-node setup for development. For a multi-node deployment, create a shared Docker network so CASSANDRA_SEEDS can use container hostname resolution. 
+Use a single-node setup for development. For a multi-node deployment, create a shared Docker network so CASSANDRA_SEEDS can use container hostname resolution.

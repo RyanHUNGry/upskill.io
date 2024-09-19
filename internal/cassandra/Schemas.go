@@ -28,11 +28,12 @@ const (
     `
 	top_interviews_by_rating = `
     CREATE TABLE IF NOT EXISTS top_interviews_by_rating (
-        rating FLOAT,
+        rating_bucket SMALLINT,
+        actual_rating, float
         interview_id UUID,
         company_name TEXT,
         user_id UUID,
-        PRIMARY KEY (rating, interview_id)
+        PRIMARY KEY (rating, actual_rating, interview_id)
     );
     `
 	questions_by_interview = `

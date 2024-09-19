@@ -10,7 +10,7 @@ func (db *InterviewServiceDatabase) initializeKeyspace() {
 
 	switch stage {
 	case "dev":
-		queryString := "CREATE KEYSPACE IF NOT EXISTS interview_service WITH REPLICATION = {'class': 'NetworkTopologyStrategy', 'datacenter1': 3};"
+		queryString := "CREATE KEYSPACE IF NOT EXISTS interview_service WITH REPLICATION = {'class': 'NetworkTopologyStrategy', 'DC1': 3};"
 		err := db.session.Query(queryString).WithContext(db.databaseContext).Exec()
 		if err != nil {
 			panic(err)
