@@ -3,20 +3,21 @@ package api;
 
 option go_package = "ryhung.upskill.io/internal/api";
 
-// User sends an answer to a specific session's question to be scored
+// Message for creating an answer in an interview session
 message CreateAnswerRequest {
     string answer = 1;
     bytes session_id = 2;
     bytes interview_id = 3;
     bytes user_id = 4;
     int32 question_idx = 5;
-};
+}
 
-// User can get the score for their answers for a session
-message GetAnswerResponse {
+// Message for retrieving answer scores
+message GetAnswerScores {
     bytes user_id = 1;
     bytes interview_id = 2;
-    
+
+    // Inner message representing the score of a single answer
     message AnswerScore {
         double score = 1;
         string answer = 2;
@@ -25,16 +26,34 @@ message GetAnswerResponse {
     }
 
     repeated AnswerScore answer_scores = 3;
-};
+}
 
-// User can create an interview with a list of questions and company
+// Request to create an interview with a company and questions
 message CreateInterviewRequest {
     bytes user_id = 1;
-    string company = 2;
+    string company_name = 2;
 
+    // Inner message representing a single question in an interview
     message Question {
         string question = 1;
+        int32 question_idx = 2;
     }
 
     repeated Question questions = 3;
-};
+}
+
+// Response message for retrieving interview details
+message GetInterview {
+    bytes interview_id = 1;
+    string company_name = 2;
+    repeated CreateInterviewRequest.Question questions = 3;
+}
+
+// Service definition containing the RPC methods
+service InterviewService {
+    // RPC to create an interview with a list of questions and the company name
+    rpc CreateInterview(CreateInterviewRequest) returns (GetInterview) {};
+
+    // RPC to send a stream of answers and retrieve aggregated scores
+    rpc CreateAnswer(stream CreateAnswerRequest) returns (GetAnswerScores) {};
+}
