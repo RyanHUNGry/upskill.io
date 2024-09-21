@@ -1,3 +1,4 @@
+// mock data for the cassandra database
 package cassandra
 
 import (
@@ -21,6 +22,20 @@ type answersBySessionData struct {
 	Answer       string  `fake:"{paragraph:5,4,12}"`
 	Question_idx int     `fake:"-"`
 	Score        float32 `fake:"{float32:60,100}"`
+}
+
+type interviewsByUserData struct {
+	User_id      gocql.UUID `fake:"-"`
+	Interview_id gocql.UUID `fake:"-"`
+	Company_name string     `fake:"{company}"`
+	Rating       float32    `fake:"{company}"`
+}
+
+type InterviewsByCompanyData struct {
+	Company_name string
+	Interview_id gocql.UUID
+	Rating       float32
+	User_id      gocql.UUID
 }
 
 // for use during initialization based on stage
@@ -79,7 +94,11 @@ func (db *InterviewServiceDatabase) seedDatabase() {
 	/*
 		Create one new user with two interviews, each with three questions.
 		Use the first user above to create two interviews, each with three questions.
-		The first users' interviews are used by the second user.
+
+		New user 1st interview -> 1st user in sessions_by_user
+			- second interview not assigned to any user
+		Original 1st user 1st interview -> 2nd user in sessions_by_user
+		Original 1st user 2nd interview -> 3rd user in sessions_by_user
 	*/
 
 	fmt.Println("Database seeded ✅")

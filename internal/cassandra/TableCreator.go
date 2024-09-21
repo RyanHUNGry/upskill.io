@@ -34,8 +34,10 @@ func (db *InterviewServiceDatabase) initializeTables() {
 			}
 		}
 
-		// insert seed data
-		db.seedDatabase()
+		// logic is complex, so seed database only when explicitly requested
+		if os.Getenv("SEED_DB") == "true" {
+			db.seedDatabase()
+		}
 	default:
 		panic("Unknown stage")
 	}
