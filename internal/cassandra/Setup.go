@@ -2,7 +2,6 @@ package cassandra
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
@@ -55,8 +54,6 @@ func InitializeInterviewServiceDatabase(ctx context.Context) *InterviewServiceDa
 
 	// Create tables
 	db.initializeTables()
-
-	fmt.Print("Cassandra database ready ✅")
 	return db
 }
 

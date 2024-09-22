@@ -8,7 +8,7 @@ message CreateAnswerRequest {
     string answer = 1;
     bytes session_id = 2;
     bytes interview_id = 3;
-    bytes user_id = 4;
+    bytes user_id = 4;a
     int32 question_idx = 5;
 }
 

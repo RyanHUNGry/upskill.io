@@ -29,7 +29,7 @@ const (
 	top_interviews_by_rating = `
     CREATE TABLE IF NOT EXISTS top_interviews_by_rating (
         rating_bucket SMALLINT,
-        actual_rating, float
+        actual_rating FLOAT,
         interview_id UUID,
         company_name TEXT,
         user_id UUID,
