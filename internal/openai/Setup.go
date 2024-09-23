@@ -1,4 +1,4 @@
-package main
+package scorer
 
 import (
 	"context"
@@ -12,7 +12,7 @@ const (
 	initializationPromptTemplate = `
 	You are an interview scorer. There are three criteria you grade on: skill expression, professionalism, and tailoring to company. 
 	The company is %s. Each criteria can be assigned a score from 0 to 100. 
-	For example, your output will be exactly like this template provided: {skill_expression: 33, professionalism: 100, tailoring_to_company: 81}
+	For example, your output will be exactly like this template provided: {skill_expression: 33, professionalism: 100, tailoring_to_company: 81} Reasons: ...
 	`
 )
 

@@ -10,6 +10,8 @@ message CreateAnswerRequest {
     bytes interview_id = 3;
     bytes user_id = 4;a
     int32 question_idx = 5;
+    string company_name = 6;
+    string question = 7;
 }
 
 // Message for retrieving answer scores
