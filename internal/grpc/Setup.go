@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/sashabaranov/go-openai"
 	"ryhung.upskill.io/internal/cassandra"
 	scorer "ryhung.upskill.io/internal/openai"
 )
@@ -20,33 +19,43 @@ func (s *interviewServiceServer) CreateInterview(context.Context, *CreateIntervi
 	return nil, nil
 }
 
+type AnswerResponse = map[string]map[string]string
+
 func (s *interviewServiceServer) CreateAnswer(stream InterviewService_CreateAnswerServer) error {
+	createAnswerRequests := make([]AnswerResponse, 0, 10) // store responses in memory for processing when stream closes
+	firstCreateAnswerRequest, err := stream.Recv()
+
+	interviewScorer := scorer.InitializeModel(s.ctx, firstCreateAnswerRequest.CompanyName) // take the first message to get the company name
+	firstResponse := interviewScorer.GiveAnswer(firstCreateAnswerRequest.Question, firstCreateAnswerRequest.Answer)
+
+	createAnswerRequests = append(createAnswerRequests, firstResponse)
+
+	if err == io.EOF {
+		return stream.SendAndClose(nil)
+	}
+	if err != nil {
+		return err
+	}
+
 	for {
 		createAnswerRequest, err := stream.Recv()
 		if err == io.EOF {
-			return stream.SendAndClose(new(GetAnswerScores))
+			return stream.SendAndClose(nil)
 		}
 		if err != nil {
 			return err
 		}
 
-		// Build initial prompt
-		client, req := scorer.InitializeModel(s.ctx, "Jane Street")
+		// var answer string = createAnswerRequest.Answer
+		// var sessionId []byte = createAnswerRequest.SessionId
+		// var interviewId []byte = createAnswerRequest.InterviewId
+		// var userId []byte = createAnswerRequest.UserId
+		// var questionIdx int32 = createAnswerRequest.QuestionIdx
+		// var question string = createAnswerRequest.Question
 
-		req.Messages = append(req.Messages, openai.ChatCompletionMessage{
-			Role:    openai.ChatMessageRoleUser,
-			Content: createAnswerRequest.Answer,
-		})
-
-		resp, err := client.CreateChatCompletion(s.ctx, req)
-
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Printf("%s\n\n", resp.Choices[0].Message.Content)
-		req.Messages = append(req.Messages, resp.Choices[0].Message)
-		fmt.Print("> ")
+		response := interviewScorer.GiveAnswer(createAnswerRequest.Question, createAnswerRequest.Answer)
+		fmt.Println(response)
+		createAnswerRequests = append(createAnswerRequests, response)
 	}
 }
 

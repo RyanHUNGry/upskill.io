@@ -8,7 +8,7 @@ message CreateAnswerRequest {
     string answer = 1;
     bytes session_id = 2;
     bytes interview_id = 3;
-    bytes user_id = 4;a
+    bytes user_id = 4;
     int32 question_idx = 5;
     string company_name = 6;
     string question = 7;
@@ -25,6 +25,7 @@ message GetAnswerScores {
         string answer = 2;
         int32 answer_idx = 3;
         int32 question_idx = 4;
+        string feedback = 5;
     }
 
     repeated AnswerScore answer_scores = 3;
