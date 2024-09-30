@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/joho/godotenv"
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/sashabaranov/go-openai/jsonschema"
 )
@@ -108,6 +109,10 @@ var schema *openai.FunctionDefinition = &openai.FunctionDefinition{
 
 // Rather than initializing a new client per gRPC request, we can initialize the model once and use it for all requests
 func init() {
+	err := godotenv.Load("../../.env")
+	if err != nil {
+		panic(err)
+	}
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	client = openai.NewClient(apiKey)
 }
@@ -136,7 +141,7 @@ func InitializeModel(ctx context.Context, company string) *InterviewScorer {
 }
 
 // give answer to model and update chat context, return the unmarshalled response
-func (interviewScorer *InterviewScorer) GiveAnswer(question, answer string) map[string]map[string]string {
+func (interviewScorer *InterviewScorer) GiveAnswer(question, answer string) map[string]map[string]interface{} {
 	prompt := fmt.Sprintf(answerQuestionPromptTemplate, question, answer)
 
 	interviewScorer.reqChain.Messages = append(interviewScorer.reqChain.Messages, openai.ChatCompletionMessage{
@@ -149,6 +154,14 @@ func (interviewScorer *InterviewScorer) GiveAnswer(question, answer string) map[
 		panic(err)
 	}
 
+	functionCallResultMessage := openai.ChatCompletionMessage{
+		Role:       openai.ChatMessageRoleTool,
+		ToolCallID: resp.Choices[0].Message.ToolCalls[0].ID,
+		Content:    resp.Choices[0].Message.ToolCalls[0].Function.Arguments,
+	}
+
+	interviewScorer.reqChain.Messages = append(interviewScorer.reqChain.Messages, resp.Choices[0].Message, functionCallResultMessage)
+
 	parsedResponse, err := interviewScorer.parseAnswer(resp)
 	if err != nil {
 		panic(err)
@@ -157,9 +170,9 @@ func (interviewScorer *InterviewScorer) GiveAnswer(question, answer string) map[
 }
 
 // parses the schema into a map
-func (interviewScorer *InterviewScorer) parseAnswer(resp openai.ChatCompletionResponse) (map[string]map[string]string, error) {
-	responseMap := make(map[string]map[string]string)
-	responseBytes := []byte(resp.Choices[0].Message.Content)
+func (interviewScorer *InterviewScorer) parseAnswer(resp openai.ChatCompletionResponse) (map[string]map[string]interface{}, error) {
+	responseMap := make(map[string]map[string]interface{})
+	responseBytes := []byte(resp.Choices[0].Message.ToolCalls[0].Function.Arguments)
 	json.Unmarshal(responseBytes, &responseMap)
 	return responseMap, nil
 }

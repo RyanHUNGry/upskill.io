@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	"ryhung.upskill.io/internal/cassandra"
@@ -19,19 +18,26 @@ func (s *interviewServiceServer) CreateInterview(context.Context, *CreateIntervi
 	return nil, nil
 }
 
-type AnswerResponse = map[string]map[string]string
+type AnswerResponsePair struct {
+	answerResponse AnswerResponse // this is a map, which is referenced by pointer under the hood, so this struct doesn't need to be pointer referenced
+	answerRequest  *CreateAnswerRequest
+}
+type AnswerResponse = map[string]map[string]interface{}
 
 func (s *interviewServiceServer) CreateAnswer(stream InterviewService_CreateAnswerServer) error {
-	createAnswerRequests := make([]AnswerResponse, 0, 10) // store responses in memory for processing when stream closes
-	firstCreateAnswerRequest, err := stream.Recv()
-
+	createAnswerRequests := make([]AnswerResponsePair, 0, 10)                              // store responses in memory for processing when stream closes. Handler activates with a gauranteed first message.
+	firstCreateAnswerRequest, err := stream.Recv()                                         // blocks until new line is received, then sequentially in current execution thread
 	interviewScorer := scorer.InitializeModel(s.ctx, firstCreateAnswerRequest.CompanyName) // take the first message to get the company name
 	firstResponse := interviewScorer.GiveAnswer(firstCreateAnswerRequest.Question, firstCreateAnswerRequest.Answer)
 
-	createAnswerRequests = append(createAnswerRequests, firstResponse)
+	createAnswerRequests = append(createAnswerRequests, AnswerResponsePair{firstResponse, firstCreateAnswerRequest})
 
 	if err == io.EOF {
-		return stream.SendAndClose(nil)
+		getAnswerScores, err := answerAggregator(createAnswerRequests)
+		if err != nil {
+			return err
+		}
+		return stream.SendAndClose(getAnswerScores)
 	}
 	if err != nil {
 		return err
@@ -40,7 +46,11 @@ func (s *interviewServiceServer) CreateAnswer(stream InterviewService_CreateAnsw
 	for {
 		createAnswerRequest, err := stream.Recv()
 		if err == io.EOF {
-			return stream.SendAndClose(nil)
+			getAnswerScores, err := answerAggregator(createAnswerRequests)
+			if err != nil {
+				return err
+			}
+			return stream.SendAndClose(getAnswerScores)
 		}
 		if err != nil {
 			return err
@@ -54,8 +64,7 @@ func (s *interviewServiceServer) CreateAnswer(stream InterviewService_CreateAnsw
 		// var question string = createAnswerRequest.Question
 
 		response := interviewScorer.GiveAnswer(createAnswerRequest.Question, createAnswerRequest.Answer)
-		fmt.Println(response)
-		createAnswerRequests = append(createAnswerRequests, response)
+		createAnswerRequests = append(createAnswerRequests, AnswerResponsePair{response, createAnswerRequest})
 	}
 }
 

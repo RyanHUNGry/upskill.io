@@ -1,0 +1,10 @@
+syntax = "proto3";
+package api;
+
+option go_package = "ryhung.upskill.io/internal/api";
+
+enum Criteria {
+  PROFESSIONALISM = 0;
+  SKILL_EXPRESSION = 1;
+  TAILORING_TO_COMPANY = 2;
+}
