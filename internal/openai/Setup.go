@@ -42,7 +42,8 @@ var client *openai.Client
 const (
 	initializationPromptTemplate = `
 	You are an interview scorer. There are three criteria you grade on: skill expression, professionalism, and tailoring to company. 
-	The interviewing company is %s. You will receive each question followed by its reponse. Each criteria must be assigned a score from 0 to 100. There must be a reason given for each score.
+	The interviewing company is %s. You will receive each question followed by its reponse. Each criteria must be assigned a score from 0 to 100. There must be a reason given for each score, and constructive criticism on how to improve.
+	You are required to be harsh with your score. A score of 100 should be reserved for the most exceptional responses.
 	`
 )
 

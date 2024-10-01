@@ -30,12 +30,12 @@ message GetAnswerScores {
         string answer = 2;
         int32 answer_idx = 3;
         int32 question_idx = 4;
-        string feedback = 5;
         string question = 6;
 
         message ScoreBreakdown {
             Criteria criteria = 1;
             double score = 2;
+            string feedback = 3;
         }
 
         repeated ScoreBreakdown score_breakdowns = 7;

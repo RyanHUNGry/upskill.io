@@ -56,13 +56,6 @@ func (s *interviewServiceServer) CreateAnswer(stream InterviewService_CreateAnsw
 			return err
 		}
 
-		// var answer string = createAnswerRequest.Answer
-		// var sessionId []byte = createAnswerRequest.SessionId
-		// var interviewId []byte = createAnswerRequest.InterviewId
-		// var userId []byte = createAnswerRequest.UserId
-		// var questionIdx int32 = createAnswerRequest.QuestionIdx
-		// var question string = createAnswerRequest.Question
-
 		response := interviewScorer.GiveAnswer(createAnswerRequest.Question, createAnswerRequest.Answer)
 		createAnswerRequests = append(createAnswerRequests, AnswerResponsePair{response, createAnswerRequest})
 	}

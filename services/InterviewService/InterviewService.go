@@ -7,11 +7,33 @@ import (
 	"net"
 	"os"
 
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"ryhung.upskill.io/internal/cassandra"
 	api "ryhung.upskill.io/internal/grpc"
 )
+
+// this is from the grpc-ecosystem package, and basically acts as a wrapper for third party loggers to integrate with grpc interceptors
+func InterceptorLogger(l log.Logger) logging.Logger {
+	return logging.LoggerFunc(func(_ context.Context, lvl logging.Level, msg string, fields ...any) {
+		largs := append([]any{"msg", msg}, fields...)
+		switch lvl {
+		case logging.LevelDebug:
+			_ = level.Debug(l).Log(largs...)
+		case logging.LevelInfo:
+			_ = level.Info(l).Log(largs...)
+		case logging.LevelWarn:
+			_ = level.Warn(l).Log(largs...)
+		case logging.LevelError:
+			_ = level.Error(l).Log(largs...)
+		default:
+			panic(fmt.Sprintf("unknown level %v", lvl))
+		}
+	})
+}
 
 func main() {
 	err := godotenv.Load("../../.env")
@@ -40,13 +62,25 @@ func main() {
 	// initialize gRPC API server
 	if runlevel == "5" || runlevel == "1" {
 		go func() {
+			logger := log.NewLogfmtLogger(os.Stdout)
+
+			opts := []logging.Option{
+				logging.WithLogOnEvents(logging.StartCall, logging.FinishCall),
+				// Add any other option (check functions starting with logging.With).
+			}
+
 			fmt.Println("Initializing gRPC API server ⌛")
 			lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", 9999))
 			if err != nil {
 				panic(err)
 			}
-			var opts []grpc.ServerOption
-			grpcServer := grpc.NewServer(opts...)
+
+			var serverOpts []grpc.ServerOption = []grpc.ServerOption{
+				grpc.ChainUnaryInterceptor(logging.UnaryServerInterceptor(InterceptorLogger(logger), opts...)),
+				grpc.ChainStreamInterceptor(logging.StreamServerInterceptor(InterceptorLogger(logger), opts...)),
+			}
+
+			grpcServer := grpc.NewServer(serverOpts...)
 			var db *cassandra.InterviewServiceDatabase // nil if not set
 			if runlevel == "5" {
 				db = <-dbChannel
