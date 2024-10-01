@@ -65,6 +65,8 @@ message GetInterview {
     repeated CreateInterviewRequest.Question questions = 3;
 }
 
+message Health {}
+
 // Service definition containing the RPC methods
 service InterviewService {
     // RPC to create an interview with a list of questions and the company name
@@ -72,4 +74,6 @@ service InterviewService {
 
     // RPC to send a stream of answers and retrieve aggregated scores
     rpc CreateAnswer(stream CreateAnswerRequest) returns (GetAnswerScores) {};
+
+    rpc ServiceHealthProbe(Health) returns (Health) {};
 }

@@ -7,28 +7,30 @@ import (
 	"net"
 	"os"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	kitlog "github.com/go-kit/log"
+	kitlogLevel "github.com/go-kit/log/level"
+	loggingWrapper "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"ryhung.upskill.io/internal/cassandra"
 	api "ryhung.upskill.io/internal/grpc"
 )
 
-// this is from the grpc-ecosystem package, and basically acts as a wrapper for third party loggers to integrate with grpc interceptors
-func InterceptorLogger(l log.Logger) logging.Logger {
-	return logging.LoggerFunc(func(_ context.Context, lvl logging.Level, msg string, fields ...any) {
+// InterceptorLogger adapts go-kit logger to interceptor logger.
+// this is also where kafka logs are produced
+func InterceptorLogger(l kitlog.Logger) loggingWrapper.Logger {
+	return loggingWrapper.LoggerFunc(func(_ context.Context, lvl loggingWrapper.Level, msg string, fields ...any) {
 		largs := append([]any{"msg", msg}, fields...)
 		switch lvl {
-		case logging.LevelDebug:
-			_ = level.Debug(l).Log(largs...)
-		case logging.LevelInfo:
-			_ = level.Info(l).Log(largs...)
-		case logging.LevelWarn:
-			_ = level.Warn(l).Log(largs...)
-		case logging.LevelError:
-			_ = level.Error(l).Log(largs...)
+		case loggingWrapper.LevelDebug:
+			_ = kitlogLevel.Debug(l).Log(largs...)
+		case loggingWrapper.LevelInfo:
+			_ = kitlogLevel.Info(l).Log(largs...)
+		case loggingWrapper.LevelWarn:
+			_ = kitlogLevel.Warn(l).Log(largs...)
+		case loggingWrapper.LevelError:
+			_ = kitlogLevel.Error(l).Log(largs...)
 		default:
 			panic(fmt.Sprintf("unknown level %v", lvl))
 		}
@@ -62,11 +64,20 @@ func main() {
 	// initialize gRPC API server
 	if runlevel == "5" || runlevel == "1" {
 		go func() {
-			logger := log.NewLogfmtLogger(os.Stdout)
+			logger := kitlog.NewSyncLogger(kitlog.NewJSONLogger(os.Stdout)) // because each gRPC request will be handled in a separate goroutine, logger must be thread-safe so ordering is preserved
+			logger = kitlog.With(logger, "service", "InterviewService")
 
-			opts := []logging.Option{
-				logging.WithLogOnEvents(logging.StartCall, logging.FinishCall),
-				// Add any other option (check functions starting with logging.With).
+			opts := []loggingWrapper.Option{
+				loggingWrapper.WithLogOnEvents(loggingWrapper.StartCall, loggingWrapper.FinishCall),
+				loggingWrapper.WithLevels(func(code codes.Code) loggingWrapper.Level {
+					switch code {
+					case codes.OK:
+						return loggingWrapper.LevelInfo
+					default:
+						return loggingWrapper.LevelError
+					}
+				}),
+				// Add any other option (check functions starting with loggingWrapper.With).
 			}
 
 			fmt.Println("Initializing gRPC API server ⌛")
@@ -76,8 +87,8 @@ func main() {
 			}
 
 			var serverOpts []grpc.ServerOption = []grpc.ServerOption{
-				grpc.ChainUnaryInterceptor(logging.UnaryServerInterceptor(InterceptorLogger(logger), opts...)),
-				grpc.ChainStreamInterceptor(logging.StreamServerInterceptor(InterceptorLogger(logger), opts...)),
+				grpc.ChainUnaryInterceptor(loggingWrapper.UnaryServerInterceptor(InterceptorLogger(logger), opts...)),
+				grpc.ChainStreamInterceptor(loggingWrapper.StreamServerInterceptor(InterceptorLogger(logger), opts...)),
 			}
 
 			grpcServer := grpc.NewServer(serverOpts...)

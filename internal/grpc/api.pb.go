@@ -316,6 +316,44 @@ func (x *GetInterview) GetQuestions() []*CreateInterviewRequest_Question {
 	return nil
 }
 
+type Health struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *Health) Reset() {
+	*x = Health{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Health) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Health) ProtoMessage() {}
+
+func (x *Health) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Health.ProtoReflect.Descriptor instead.
+func (*Health) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{4}
+}
+
 // Inner message representing the score of a single answer
 type GetAnswerScores_AnswerScore struct {
 	state         protoimpl.MessageState
@@ -333,7 +371,7 @@ type GetAnswerScores_AnswerScore struct {
 func (x *GetAnswerScores_AnswerScore) Reset() {
 	*x = GetAnswerScores_AnswerScore{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_msgTypes[4]
+		mi := &file_api_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -346,7 +384,7 @@ func (x *GetAnswerScores_AnswerScore) String() string {
 func (*GetAnswerScores_AnswerScore) ProtoMessage() {}
 
 func (x *GetAnswerScores_AnswerScore) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[4]
+	mi := &file_api_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -417,7 +455,7 @@ type GetAnswerScores_AnswerScore_ScoreBreakdown struct {
 func (x *GetAnswerScores_AnswerScore_ScoreBreakdown) Reset() {
 	*x = GetAnswerScores_AnswerScore_ScoreBreakdown{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_msgTypes[5]
+		mi := &file_api_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -430,7 +468,7 @@ func (x *GetAnswerScores_AnswerScore_ScoreBreakdown) String() string {
 func (*GetAnswerScores_AnswerScore_ScoreBreakdown) ProtoMessage() {}
 
 func (x *GetAnswerScores_AnswerScore_ScoreBreakdown) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[5]
+	mi := &file_api_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -480,7 +518,7 @@ type CreateInterviewRequest_Question struct {
 func (x *CreateInterviewRequest_Question) Reset() {
 	*x = CreateInterviewRequest_Question{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_msgTypes[6]
+		mi := &file_api_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -493,7 +531,7 @@ func (x *CreateInterviewRequest_Question) String() string {
 func (*CreateInterviewRequest_Question) ProtoMessage() {}
 
 func (x *CreateInterviewRequest_Question) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[6]
+	mi := &file_api_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -601,19 +639,23 @@ var file_api_proto_rawDesc = []byte{
 	0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x72, 0x65,
 	0x61, 0x74, 0x65, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x52, 0x65, 0x71, 0x75,
 	0x65, 0x73, 0x74, 0x2e, 0x51, 0x75, 0x65, 0x73, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x09, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x32, 0x9b, 0x01, 0x0a, 0x10, 0x49, 0x6e, 0x74, 0x65,
-	0x72, 0x76, 0x69, 0x65, 0x77, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x43, 0x0a, 0x0f,
-	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x12,
-	0x1b, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x49, 0x6e, 0x74, 0x65,
-	0x72, 0x76, 0x69, 0x65, 0x77, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x11, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x22,
-	0x00, 0x12, 0x42, 0x0a, 0x0c, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x6e, 0x73, 0x77, 0x65,
-	0x72, 0x12, 0x18, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x6e,
-	0x73, 0x77, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14, 0x2e, 0x61, 0x70,
-	0x69, 0x2e, 0x47, 0x65, 0x74, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x53, 0x63, 0x6f, 0x72, 0x65,
-	0x73, 0x22, 0x00, 0x28, 0x01, 0x42, 0x20, 0x5a, 0x1e, 0x72, 0x79, 0x68, 0x75, 0x6e, 0x67, 0x2e,
-	0x75, 0x70, 0x73, 0x6b, 0x69, 0x6c, 0x6c, 0x2e, 0x69, 0x6f, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72,
-	0x6e, 0x61, 0x6c, 0x2f, 0x61, 0x70, 0x69, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x73, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x08, 0x0a, 0x06, 0x48, 0x65, 0x61, 0x6c, 0x74,
+	0x68, 0x32, 0xcd, 0x01, 0x0a, 0x10, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x53,
+	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x43, 0x0a, 0x0f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
+	0x49, 0x6e, 0x74, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x12, 0x1b, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x11, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74,
+	0x49, 0x6e, 0x74, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x22, 0x00, 0x12, 0x42, 0x0a, 0x0c, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x12, 0x18, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x41,
+	0x6e, 0x73, 0x77, 0x65, 0x72, 0x53, 0x63, 0x6f, 0x72, 0x65, 0x73, 0x22, 0x00, 0x28, 0x01, 0x12,
+	0x30, 0x0a, 0x12, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x48, 0x65, 0x61, 0x6c, 0x74, 0x68,
+	0x50, 0x72, 0x6f, 0x62, 0x65, 0x12, 0x0b, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x48, 0x65, 0x61, 0x6c,
+	0x74, 0x68, 0x1a, 0x0b, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x48, 0x65, 0x61, 0x6c, 0x74, 0x68, 0x22,
+	0x00, 0x42, 0x20, 0x5a, 0x1e, 0x72, 0x79, 0x68, 0x75, 0x6e, 0x67, 0x2e, 0x75, 0x70, 0x73, 0x6b,
+	0x69, 0x6c, 0x6c, 0x2e, 0x69, 0x6f, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f,
+	0x61, 0x70, 0x69, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -628,29 +670,32 @@ func file_api_proto_rawDescGZIP() []byte {
 	return file_api_proto_rawDescData
 }
 
-var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_api_proto_goTypes = []any{
 	(*CreateAnswerRequest)(nil),                        // 0: api.CreateAnswerRequest
 	(*GetAnswerScores)(nil),                            // 1: api.GetAnswerScores
 	(*CreateInterviewRequest)(nil),                     // 2: api.CreateInterviewRequest
 	(*GetInterview)(nil),                               // 3: api.GetInterview
-	(*GetAnswerScores_AnswerScore)(nil),                // 4: api.GetAnswerScores.AnswerScore
-	(*GetAnswerScores_AnswerScore_ScoreBreakdown)(nil), // 5: api.GetAnswerScores.AnswerScore.ScoreBreakdown
-	(*CreateInterviewRequest_Question)(nil),            // 6: api.CreateInterviewRequest.Question
-	(Criteria)(0),                                      // 7: api.Criteria
+	(*Health)(nil),                                     // 4: api.Health
+	(*GetAnswerScores_AnswerScore)(nil),                // 5: api.GetAnswerScores.AnswerScore
+	(*GetAnswerScores_AnswerScore_ScoreBreakdown)(nil), // 6: api.GetAnswerScores.AnswerScore.ScoreBreakdown
+	(*CreateInterviewRequest_Question)(nil),            // 7: api.CreateInterviewRequest.Question
+	(Criteria)(0),                                      // 8: api.Criteria
 }
 var file_api_proto_depIdxs = []int32{
-	4, // 0: api.GetAnswerScores.answer_scores:type_name -> api.GetAnswerScores.AnswerScore
-	6, // 1: api.CreateInterviewRequest.questions:type_name -> api.CreateInterviewRequest.Question
-	6, // 2: api.GetInterview.questions:type_name -> api.CreateInterviewRequest.Question
-	5, // 3: api.GetAnswerScores.AnswerScore.score_breakdowns:type_name -> api.GetAnswerScores.AnswerScore.ScoreBreakdown
-	7, // 4: api.GetAnswerScores.AnswerScore.ScoreBreakdown.criteria:type_name -> api.Criteria
+	5, // 0: api.GetAnswerScores.answer_scores:type_name -> api.GetAnswerScores.AnswerScore
+	7, // 1: api.CreateInterviewRequest.questions:type_name -> api.CreateInterviewRequest.Question
+	7, // 2: api.GetInterview.questions:type_name -> api.CreateInterviewRequest.Question
+	6, // 3: api.GetAnswerScores.AnswerScore.score_breakdowns:type_name -> api.GetAnswerScores.AnswerScore.ScoreBreakdown
+	8, // 4: api.GetAnswerScores.AnswerScore.ScoreBreakdown.criteria:type_name -> api.Criteria
 	2, // 5: api.InterviewService.CreateInterview:input_type -> api.CreateInterviewRequest
 	0, // 6: api.InterviewService.CreateAnswer:input_type -> api.CreateAnswerRequest
-	3, // 7: api.InterviewService.CreateInterview:output_type -> api.GetInterview
-	1, // 8: api.InterviewService.CreateAnswer:output_type -> api.GetAnswerScores
-	7, // [7:9] is the sub-list for method output_type
-	5, // [5:7] is the sub-list for method input_type
+	4, // 7: api.InterviewService.ServiceHealthProbe:input_type -> api.Health
+	3, // 8: api.InterviewService.CreateInterview:output_type -> api.GetInterview
+	1, // 9: api.InterviewService.CreateAnswer:output_type -> api.GetAnswerScores
+	4, // 10: api.InterviewService.ServiceHealthProbe:output_type -> api.Health
+	8, // [8:11] is the sub-list for method output_type
+	5, // [5:8] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
 	5, // [5:5] is the sub-list for extension extendee
 	0, // [0:5] is the sub-list for field type_name
@@ -712,7 +757,7 @@ func file_api_proto_init() {
 			}
 		}
 		file_api_proto_msgTypes[4].Exporter = func(v any, i int) any {
-			switch v := v.(*GetAnswerScores_AnswerScore); i {
+			switch v := v.(*Health); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -724,7 +769,7 @@ func file_api_proto_init() {
 			}
 		}
 		file_api_proto_msgTypes[5].Exporter = func(v any, i int) any {
-			switch v := v.(*GetAnswerScores_AnswerScore_ScoreBreakdown); i {
+			switch v := v.(*GetAnswerScores_AnswerScore); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -736,6 +781,18 @@ func file_api_proto_init() {
 			}
 		}
 		file_api_proto_msgTypes[6].Exporter = func(v any, i int) any {
+			switch v := v.(*GetAnswerScores_AnswerScore_ScoreBreakdown); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_msgTypes[7].Exporter = func(v any, i int) any {
 			switch v := v.(*CreateInterviewRequest_Question); i {
 			case 0:
 				return &v.state
@@ -754,7 +811,7 @@ func file_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_api_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

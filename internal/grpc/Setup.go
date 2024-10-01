@@ -24,6 +24,10 @@ type AnswerResponsePair struct {
 }
 type AnswerResponse = map[string]map[string]interface{}
 
+func (s *interviewServiceServer) ServiceHealthProbe(ctx context.Context, health *Health) (*Health, error) {
+	return new(Health), nil
+}
+
 func (s *interviewServiceServer) CreateAnswer(stream InterviewService_CreateAnswerServer) error {
 	createAnswerRequests := make([]AnswerResponsePair, 0, 10)                              // store responses in memory for processing when stream closes. Handler activates with a gauranteed first message.
 	firstCreateAnswerRequest, err := stream.Recv()                                         // blocks until new line is received, then sequentially in current execution thread
