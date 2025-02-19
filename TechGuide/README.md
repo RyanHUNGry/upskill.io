@@ -1,1 +1,0 @@
-Aggregation of notes on conceptual design for the technologies used in this project.
