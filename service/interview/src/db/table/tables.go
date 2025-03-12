@@ -46,3 +46,31 @@ func InitializeTables(session *gocql.Session, ctx context.Context) {
 		}
 	}
 }
+
+func DropAllTables(session *gocql.Session, ctx context.Context) {
+	getTableNamesQuery := `SELECT table_name FROM system_schema.tables WHERE keyspace_name='interview';`
+	tableNames := []string{}
+
+	scanner := session.Query(getTableNamesQuery).WithContext(ctx).Iter().Scanner()
+	for scanner.Next() {
+		var tableName string
+		err := scanner.Scan(&tableName)
+		if err != nil {
+			log.Fatal("Failed to scan table name", err)
+		}
+
+		tableNames = append(tableNames, tableName)
+	}
+
+	if scanner.Err() != nil {
+		log.Fatal("Failed to scan table names", scanner.Err())
+	}
+
+	for _, tableName := range tableNames {
+		dropTableQuery := fmt.Sprintf("DROP TABLE %s;", tableName)
+		err := session.Query(dropTableQuery).WithContext(ctx).Exec()
+		if err != nil {
+			log.Fatal("Failed to drop table", tableName, err)
+		}
+	}
+}

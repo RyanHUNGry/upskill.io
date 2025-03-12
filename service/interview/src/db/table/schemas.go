@@ -5,13 +5,21 @@ CREATE TABLE IF NOT EXISTS interview_templates (
     interview_template_id TIMEUUID,
     average_score INT,
     average_rating INT,
-    amount_conducted COUNTER,
+    amount_conducted INT,
     company TEXT,
     role TEXT,
     skills SET<TEXT>,
     description TEXT,
     user_id INT,
     questions LIST<TEXT>,
+    PRIMARY KEY (interview_template_id)
+);
+`
+
+const AMOUNT_CONDUCTED_BY_INTERVIEW_TEMPLATE = `
+CREATE TABLE IF NOT EXISTS amount_conducted_by_interview_template (
+    interview_template_id TIMEUUID,
+    amount_conducted COUNTER,
     PRIMARY KEY (interview_template_id)
 );
 `
@@ -70,7 +78,7 @@ CREATE TABLE IF NOT EXISTS conducted_interviews (
     user_id INT,
     role TEXT,
     rating INT,
-    responses response_type,
+    responses frozen <response_type>,
     PRIMARY KEY (conducted_interview_id)
 );
 `
@@ -95,14 +103,15 @@ var types = map[string]string{
 }
 
 var schemas = map[string]string{
-	"interview_templates":                  INTERVIEW_TEMPLATES,
-	"interview_templates_by_company":       INTERVIEW_TEMPLATES_BY_COMPANY,
-	"interview_templates_by_user":          INTERVIEW_TEMPLATES_BY_USER,
-	"average_scores_by_role_and_company":   AVERAGE_SCORES_BY_ROLE_AND_COMPANY,
-	"average_ratings_by_role_and_company":  AVERAGE_RATINGS_BY_ROLE_AND_COMPANY,
-	"amount_conducted_by_role_and_company": AMOUNT_CONDUCTED_BY_ROLE_AND_COMPANY,
-	"conducted_interviews":                 CONDUCTED_INTERVIEWS,
-	"conducted_interviews_by_user":         CONDUCTED_INTERVIEWS_BY_USER,
+	"interview_templates":                    INTERVIEW_TEMPLATES,
+	"interview_templates_by_company":         INTERVIEW_TEMPLATES_BY_COMPANY,
+	"interview_templates_by_user":            INTERVIEW_TEMPLATES_BY_USER,
+	"average_scores_by_role_and_company":     AVERAGE_SCORES_BY_ROLE_AND_COMPANY,
+	"average_ratings_by_role_and_company":    AVERAGE_RATINGS_BY_ROLE_AND_COMPANY,
+	"amount_conducted_by_role_and_company":   AMOUNT_CONDUCTED_BY_ROLE_AND_COMPANY,
+	"conducted_interviews":                   CONDUCTED_INTERVIEWS,
+	"conducted_interviews_by_user":           CONDUCTED_INTERVIEWS_BY_USER,
+	"amount_conducted_by_interview_template": AMOUNT_CONDUCTED_BY_INTERVIEW_TEMPLATE,
 }
 
 var additionalCmds = map[string]string{

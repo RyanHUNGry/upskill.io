@@ -19,7 +19,7 @@ type CassandraSession struct {
 func Connect(host string, port string, ctx context.Context) (*CassandraSession, error) {
 	cluster := gocql.NewCluster(host + ":" + port)
 	cluster.ConnectTimeout = 3 * time.Second
-	cluster.Logger = log.New(os.Stdout, "gocql: ", log.LstdFlags)
+	cluster.Logger = log.New(os.Stdout, "gocql: ", log.LstdFlags) // output to stdout, prefix with gocql:, add timestamp
 	session, err := cluster.CreateSession()
 
 	if err != nil {
