@@ -4,6 +4,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"interview/src/db"
 	"interview/src/db/table"
 	"log"
@@ -32,11 +34,19 @@ func initializeCassandra() {
 	dbContext := context.Background()
 	db, err := db.Connect(cassandraHost, cassandraPort, dbContext)
 
+	clearDb := flag.Bool("c", false, "Clear all tables")
+	flag.Parse()
 	if err != nil {
 		log.Fatal("Database connection failed")
 	}
-
 	defer db.Session.Close()
+
+	if *clearDb {
+		fmt.Println("Deleting all tables with option -c")
+		table.DropAllTables(db.Session, db.Ctx)
+		return
+	}
+
 	defer table.DropAllTables(db.Session, db.Ctx)
 	// initialize tables if they do not exist
 	table.InitializeTables(db.Session, db.Ctx)

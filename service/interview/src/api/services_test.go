@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"interview/src/db"
 	"interview/src/db/table"
 	"log"
@@ -104,5 +103,8 @@ func TestCreateInterviewTemplateCall(t *testing.T) {
 	}
 
 	resp, err := client.CreateInterviewTemplateCall(ctx, createInterviewTemplate)
-	fmt.Println(resp, err)
+
+	t.Cleanup(func() {
+
+	})
 }
