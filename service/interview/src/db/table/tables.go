@@ -48,6 +48,7 @@ func InitializeTables(session *gocql.Session, ctx context.Context) {
 }
 
 func DropAllTables(session *gocql.Session, ctx context.Context) {
+	fmt.Println("DROPPING ALL TABLES...")
 	getTableNamesQuery := `SELECT table_name FROM system_schema.tables WHERE keyspace_name='interview';`
 	tableNames := []string{}
 

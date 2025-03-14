@@ -10,13 +10,13 @@ import (
 	"github.com/gocql/gocql"
 )
 
-type CassandraSession struct {
+type Database struct {
 	Session *gocql.Session
 	Ctx     context.Context
 }
 
 // Initializes cassandra session, creates interview keyspace if not exist
-func Connect(host string, port string, ctx context.Context) (*CassandraSession, error) {
+func Connect(host string, port string, ctx context.Context) (*Database, error) {
 	cluster := gocql.NewCluster(host + ":" + port)
 	cluster.ConnectTimeout = 3 * time.Second
 	cluster.Logger = log.New(os.Stdout, "gocql: ", log.LstdFlags) // output to stdout, prefix with gocql:, add timestamp
@@ -62,5 +62,5 @@ func Connect(host string, port string, ctx context.Context) (*CassandraSession, 
 		log.Fatal("Failed database connection")
 	}
 
-	return &CassandraSession{Session: session, Ctx: ctx}, nil
+	return &Database{Session: session, Ctx: ctx}, nil
 }

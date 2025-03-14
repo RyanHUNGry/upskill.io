@@ -1,18 +1,20 @@
 package api
 
+import "interview/src/db"
+
 type InterviewServiceMapper struct{}
 
-func (s InterviewServiceMapper) ConvertInterviewTemplateToProto(interviewTemplate map[string]interface{}) *InterviewTemplate {
+func (s InterviewServiceMapper) ConvertInterviewTemplateToProto(interviewTemplate *db.InterviewTemplate) *InterviewTemplate {
 	return &InterviewTemplate{
-		InterviewTemplateId: interviewTemplate["interview_template_id"].([]byte),
-		AverageScore:        interviewTemplate["average_score"].(int32),
-		AverageRating:       interviewTemplate["average_rating"].(int32),
-		AmountConducted:     interviewTemplate["amount_conducted"].(int32),
-		Company:             interviewTemplate["company"].(string),
-		Role:                interviewTemplate["role"].(string),
-		Skills:              interviewTemplate["skills"].([]string),
-		Description:         interviewTemplate["description"].(string),
-		Questions:           interviewTemplate["questions"].([]string),
-		UserId:              interviewTemplate["user_id"].(int32),
+		InterviewTemplateId: interviewTemplate.InterviewTemplateID[:],
+		AverageScore:        *interviewTemplate.AverageScore,
+		AverageRating:       *interviewTemplate.AverageRating,
+		AmountConducted:     *interviewTemplate.AmountConducted,
+		Company:             *interviewTemplate.Company,
+		Role:                *interviewTemplate.Role,
+		Skills:              interviewTemplate.Skills,
+		Description:         *interviewTemplate.Description,
+		Questions:           interviewTemplate.Questions,
+		UserId:              *interviewTemplate.UserID,
 	}
 }

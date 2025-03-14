@@ -47,7 +47,6 @@ func initializeCassandra() {
 		return
 	}
 
-	defer table.DropAllTables(db.Session, db.Ctx)
 	// initialize tables if they do not exist
 	table.InitializeTables(db.Session, db.Ctx)
 }

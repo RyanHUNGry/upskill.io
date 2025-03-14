@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"interview/src/db"
 	"interview/src/db/table"
 	"log"
 	"net"
+	"os"
 	"testing"
 
 	"google.golang.org/grpc"
@@ -14,19 +16,21 @@ import (
 )
 
 var client InterviewServiceClient
-var closer func()
+var grpcCloser func()
 var ctx context.Context = context.Background()
+var database *db.Database
 
 func init() {
-	client, closer = initTestServer(context.Background())
+	client, grpcCloser, database = initTestServer(context.Background())
 }
 
-func initTestServer(ctx context.Context) (InterviewServiceClient, func()) {
+func initTestServer(ctx context.Context) (InterviewServiceClient, func(), *db.Database) {
 	buffer := 10 * 1024 * 1024
 	lis := bufconn.Listen(buffer) // no need for port, since bufconn controls in-memory IPC
 
 	grpcServerChan := make(chan *grpc.Server)
-	go func(grpcServerChan chan *grpc.Server) {
+	databaseSessionChan := make(chan *db.Database)
+	go func(grpcServerChan chan *grpc.Server, databaseSessionChan chan *db.Database) {
 		var serverOpts []grpc.ServerOption
 		grpcServer := grpc.NewServer(serverOpts...)
 
@@ -50,7 +54,8 @@ func initTestServer(ctx context.Context) (InterviewServiceClient, func()) {
 		}()
 
 		grpcServerChan <- grpcServer
-	}(grpcServerChan)
+		databaseSessionChan <- dbSession
+	}(grpcServerChan, databaseSessionChan)
 
 	var dialOpts []grpc.DialOption
 	dialOpts = append(dialOpts,
@@ -78,6 +83,7 @@ func initTestServer(ctx context.Context) (InterviewServiceClient, func()) {
 	}
 
 	grpcServer := <-grpcServerChan
+	databaseSession := <-databaseSessionChan
 	closer := func() {
 		err := lis.Close()
 		if err != nil {
@@ -87,12 +93,10 @@ func initTestServer(ctx context.Context) (InterviewServiceClient, func()) {
 	}
 
 	client := NewInterviewServiceClient(conn)
-	return client, closer
+	return client, closer, databaseSession
 }
 
 func TestCreateInterviewTemplateCall(t *testing.T) {
-	defer closer()
-
 	createInterviewTemplate := &CreateInterviewTemplate{
 		Company:     "Google",
 		Role:        "Systems Engineer",
@@ -104,7 +108,40 @@ func TestCreateInterviewTemplateCall(t *testing.T) {
 
 	resp, err := client.CreateInterviewTemplateCall(ctx, createInterviewTemplate)
 
-	t.Cleanup(func() {
+	if err != nil {
+		t.Errorf("error creating interview template: %v", err)
+	}
 
-	})
+	if resp.Company != createInterviewTemplate.Company {
+		t.Errorf("expected company %s, got %s", createInterviewTemplate.Company, resp.Company)
+	}
+
+	if resp.Role != createInterviewTemplate.Role {
+		t.Errorf("expected role %s, got %s", createInterviewTemplate.Role, resp.Role)
+	}
+
+	if resp.Description != createInterviewTemplate.Description {
+		t.Errorf("expected description %s, got %s", createInterviewTemplate.Description, resp.Description)
+	}
+
+	if resp.UserId != createInterviewTemplate.UserId {
+		t.Errorf("expected userId %d, got %d", createInterviewTemplate.UserId, resp.UserId)
+	}
+
+	if resp.AverageRating != -1 || resp.AverageScore != -1 || resp.AmountConducted != 0 {
+		t.Errorf("expected average rating, score to be -1 and amount conducted to be 0, got %d, %d, %d, respectively", resp.AverageRating, resp.AverageScore, resp.AmountConducted)
+	}
+}
+
+func TestMain(m *testing.M) {
+	run := func() int {
+		defer grpcCloser()
+		defer database.Session.Close()
+		defer table.DropAllTables(database.Session, context.Background()) // remember that defer is LIFO, meaning this runs first...
+		fmt.Println("Running tests...")
+		statusCode := m.Run()
+		return statusCode
+	}
+
+	os.Exit(run())
 }
