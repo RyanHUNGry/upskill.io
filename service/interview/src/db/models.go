@@ -9,16 +9,33 @@ import (
 )
 
 type InterviewTemplate struct {
-	InterviewTemplateID gocql.UUID `json:"interview_template_id"`
-	AverageScore        *int32     `json:"average_score"`
-	AverageRating       *int32     `json:"average_rating"`
-	AmountConducted     *int32     `json:"amount_conducted"`
-	Company             *string    `json:"company"`
-	Role                *string    `json:"role"`
-	Skills              []string   `json:"skills"`
-	Description         *string    `json:"description"`
-	UserID              *int32     `json:"user_id"`
-	Questions           []string   `json:"questions"`
+	InterviewTemplateID gocql.UUID
+	AverageScore        int32
+	AverageRating       int32
+	AmountConducted     int32
+	Company             string
+	Role                string
+	Skills              []string
+	Description         string
+	UserID              int32
+	Questions           []string
+}
+
+// using struct (un)marshalling
+type ResponseType struct {
+	Feedback  []string `cql:"feedback"`
+	Responses []string `cql:"responses"`
+	Questions []string `cql:"questions"`
+}
+
+type ConductedInterview struct {
+	ConductedInterviewId gocql.UUID
+	InterviewTemplateId  gocql.UUID
+	UserId               int32
+	Score                int32
+	Rating               int32
+	Role                 string
+	Responses            ResponseType
 }
 
 // creates interview template and updates associated tables
@@ -90,4 +107,74 @@ func (db *Database) FindInterviewTemplateById(templateId gocql.UUID) (*Interview
 	}
 
 	return &template, nil
+}
+
+func (db *Database) CreateConductedIntervew(
+	interviewTemplateId []byte,
+	userId int32,
+	score int32,
+	rating int32,
+	role string,
+	responses ResponseType,
+) (gocql.UUID, error) {
+	query := `
+	INSERT INTO conducted_interviews (
+		interview_template_id,
+		conducted_interview_id,
+		score,
+		rating,
+		role,
+		user_id,
+		responses
+	) VALUES (
+		?, ?, ?, ?, ?, ?, ?
+	)
+	`
+
+	conductedInterviewId := gocql.TimeUUID()
+	err := db.Session.Query(
+		query,
+		interviewTemplateId,
+		conductedInterviewId,
+		score,
+		rating,
+		role,
+		userId,
+		responses,
+	).WithContext(db.Ctx).Exec()
+
+	if err != nil {
+		return gocql.UUID{}, err
+	}
+
+	return conductedInterviewId, nil
+}
+
+func (db *Database) FindConductedInterviewById(conductedInterviewId gocql.UUID) (*ConductedInterview, error) {
+	order := `conducted_interview_id,
+	interview_template_id,
+	score,
+	user_id,
+	role,
+	rating,
+	responses`
+	query := `SELECT ` + order + ` FROM conducted_interviews WHERE conducted_interview_id = ?`
+
+	var conductedInterview ConductedInterview
+
+	err := db.Session.Query(query, conductedInterviewId).WithContext(db.Ctx).Scan(
+		&conductedInterview.ConductedInterviewId,
+		&conductedInterview.InterviewTemplateId,
+		&conductedInterview.Score,
+		&conductedInterview.UserId,
+		&conductedInterview.Role,
+		&conductedInterview.Rating,
+		&conductedInterview.Responses,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &conductedInterview, nil
 }

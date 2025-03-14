@@ -30,7 +30,8 @@ func initTestServer(ctx context.Context) (InterviewServiceClient, func(), *db.Da
 
 	grpcServerChan := make(chan *grpc.Server)
 	databaseSessionChan := make(chan *db.Database)
-	go func(grpcServerChan chan *grpc.Server, databaseSessionChan chan *db.Database) {
+
+	go func() {
 		var serverOpts []grpc.ServerOption
 		grpcServer := grpc.NewServer(serverOpts...)
 
@@ -55,7 +56,7 @@ func initTestServer(ctx context.Context) (InterviewServiceClient, func(), *db.Da
 
 		grpcServerChan <- grpcServer
 		databaseSessionChan <- dbSession
-	}(grpcServerChan, databaseSessionChan)
+	}()
 
 	var dialOpts []grpc.DialOption
 	dialOpts = append(dialOpts,
@@ -133,12 +134,51 @@ func TestCreateInterviewTemplateCall(t *testing.T) {
 	}
 }
 
+func TestCreateConductedInterviewCall(t *testing.T) {
+	createInterviewTemplate := &CreateInterviewTemplate{
+		Company:     "Palantir",
+		Role:        "Forward Deployed SWE",
+		Skills:      []string{"Go", "Terraform", "spiceDB", "Apache Kafka"},
+		Description: "Forward Deployed SWE at Palantir requiring 4+ YOE in distributed systems using Go",
+		Questions:   []string{"What are distributed transactions?", "What is the CAP theorem?"},
+		UserId:      19,
+	}
+
+	templateResp, err := client.CreateInterviewTemplateCall(ctx, createInterviewTemplate)
+	interviewTemplateId := templateResp.InterviewTemplateId
+
+	if err != nil {
+		t.Errorf("error creating interview template: %v", err)
+	}
+
+	createConductedInterview := &CreateConductedInterview{
+		InterviewTemplateId: interviewTemplateId,
+		UserId:              19,
+		Score:               86,
+		Rating:              4,
+		Role:                "Forward Deployed SWE",
+		Responses: &ResponseType{
+			Responses: []string{"Distributed transactions are a way to ensure consistency across distributed systems.", "CAP theorem states that a distributed system can only guarantee two of the following three properties: Consistency, Availability, and Partition Tolerance."},
+			Feedback:  []string{"The answer is correct but could use more detail.", "Palantir requires a deeper understanding of CAP theorem, so please explain why only two properties can be guaranteed."},
+			Questions: templateResp.Questions,
+		},
+	}
+
+	resp, err := client.CreateConductedInterviewCall(ctx, createConductedInterview)
+
+	if err != nil {
+		t.Errorf("error creating conducted interview: %v", err)
+	}
+
+	fmt.Printf("%+v\n", resp)
+}
+
 func TestMain(m *testing.M) {
 	run := func() int {
 		defer grpcCloser()
 		defer database.Session.Close()
 		defer table.DropAllTables(database.Session, context.Background()) // remember that defer is LIFO, meaning this runs first...
-		fmt.Println("Running tests...")
+		fmt.Println("Running tests through TestMain() entrypoint")
 		statusCode := m.Run()
 		return statusCode
 	}

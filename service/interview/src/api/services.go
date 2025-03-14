@@ -28,6 +28,18 @@ func (service *InterviewServiceServerImpl) CreateInterviewTemplateCall(ctx conte
 	return mapper.ConvertInterviewTemplateToProto(interviewTemplate), nil
 }
 
-// func (s *InterviewServiceServerImpl) CreateConductedInterviewCall(ctx context.Context, in *CreateConductedInterview) (*ConductedInterview, error) {
-// 	return &ConductedInterview{}, nil
-// }
+func (service *InterviewServiceServerImpl) CreateConductedInterviewCall(ctx context.Context, in *CreateConductedInterview) (*ConductedInterview, error) {
+	respType := db.ResponseType{Feedback: in.Responses.Feedback, Responses: in.Responses.Responses, Questions: in.Responses.Questions}
+	conductedInterviewId, err := service.session.CreateConductedIntervew(in.InterviewTemplateId, in.UserId, in.Score, in.Rating, in.Role, respType)
+
+	if err != nil {
+		return nil, err
+	}
+
+	conductedInterview, err := service.session.FindConductedInterviewById(conductedInterviewId)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.ConvertConductedInterviewToProto(conductedInterview), nil
+}

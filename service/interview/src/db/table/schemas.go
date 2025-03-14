@@ -74,7 +74,7 @@ const CONDUCTED_INTERVIEWS = `
 CREATE TABLE IF NOT EXISTS conducted_interviews (
     conducted_interview_id TIMEUUID,
     interview_template_id TIMEUUID,
-    score FLOAT,
+    score INT,
     user_id INT,
     role TEXT,
     rating INT,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS conducted_interviews (
 const RESPONSE_TYPE = `
 CREATE TYPE IF NOT EXISTS response_type (
     questions LIST<TEXT>,
-    answers LIST<TEXT>,
+    responses LIST<TEXT>,
     feedback LIST<TEXT>
 );
 `
