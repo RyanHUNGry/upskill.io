@@ -25,17 +25,16 @@ func init() {
 }
 
 func initTestServer(ctx context.Context) (InterviewServiceClient, func(), *db.Database) {
-	buffer := 10 * 1024 * 1024
-	lis := bufconn.Listen(buffer) // no need for port, since bufconn controls in-memory IPC
+	listenerBufferSize := 10 * 1024 * 1024 // 10 MB
+	lis := bufconn.Listen(listenerBufferSize)
 
 	grpcServerChan := make(chan *grpc.Server)
 	databaseSessionChan := make(chan *db.Database)
 
 	go func() {
-		var serverOpts []grpc.ServerOption
+		var serverOpts []grpc.ServerOption = []grpc.ServerOption{}
 		grpcServer := grpc.NewServer(serverOpts...)
 
-		// initialize database connection with test server
 		dbSession, err := db.Connect("localhost", "9042", ctx)
 		table.InitializeTables(dbSession.Session, ctx)
 
@@ -170,14 +169,67 @@ func TestCreateConductedInterviewCall(t *testing.T) {
 		t.Errorf("error creating conducted interview: %v", err)
 	}
 
-	fmt.Printf("%+v\n", resp)
+	for i := range resp.InterviewTemplateId {
+		b1 := resp.InterviewTemplateId[i]
+		b2 := interviewTemplateId[i]
+
+		if b1 != b2 {
+			t.Errorf("expected interview template id %v, got %v", interviewTemplateId, resp.InterviewTemplateId)
+		}
+	}
+
+	if resp.UserId != createConductedInterview.UserId {
+		t.Errorf("expected userId %d, got %d", createConductedInterview.UserId, resp.UserId)
+	}
+
+	if resp.Score != createConductedInterview.Score {
+		t.Errorf("expected score %d, got %d", createConductedInterview.Score, resp.Score)
+	}
+
+	if resp.Rating != createConductedInterview.Rating {
+		t.Errorf("expected rating %d, got %d", createConductedInterview.Rating, resp.Rating)
+	}
+
+	if resp.Role != createConductedInterview.Role {
+		t.Errorf("expected role %s, got %s", createConductedInterview.Role, resp.Role)
+	}
+
+	if len(resp.Responses.Feedback) != len(createConductedInterview.Responses.Feedback) {
+		t.Errorf("expected feedback length %d, got %d", len(createConductedInterview.Responses.Feedback), len(resp.Responses.Feedback))
+	}
+
+	if len(resp.Responses.Responses) != len(createConductedInterview.Responses.Responses) {
+		t.Errorf("expected responses length %d, got %d", len(createConductedInterview.Responses.Responses), len(resp.Responses.Responses))
+	}
+
+	if len(resp.Responses.Questions) != len(createConductedInterview.Responses.Questions) {
+		t.Errorf("expected questions length %d, got %d", len(createConductedInterview.Responses.Questions), len(resp.Responses.Questions))
+	}
+
+	for j, feedback := range createConductedInterview.Responses.Feedback {
+		if j < len(resp.Responses.Feedback) && resp.Responses.Feedback[j] != feedback {
+			t.Errorf("expected feedback %s, got %s at index %d", feedback, resp.Responses.Feedback[j], j)
+		}
+	}
+
+	for j, responses := range createConductedInterview.Responses.Responses {
+		if j < len(resp.Responses.Responses) && resp.Responses.Responses[j] != responses {
+			t.Errorf("expected responses %s, got %s at index %d", responses, resp.Responses.Responses[j], j)
+		}
+	}
+
+	for j, question := range createConductedInterview.Responses.Questions {
+		if j < len(resp.Responses.Questions[j]) && resp.Responses.Questions[j] != question {
+			t.Errorf("expected question %s, got %s at index %d", question, resp.Responses.Questions[j], j)
+		}
+	}
 }
 
 func TestMain(m *testing.M) {
 	run := func() int {
 		defer grpcCloser()
 		defer database.Session.Close()
-		defer table.DropAllTables(database.Session, context.Background()) // remember that defer is LIFO, meaning this runs first...
+		// defer table.DropAllTables(database.Session, context.Background()) // remember that defer is LIFO, meaning this runs first...
 		fmt.Println("Running tests through TestMain() entrypoint")
 		statusCode := m.Run()
 		return statusCode

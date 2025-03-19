@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS conducted_interviews (
 const RESPONSE_TYPE = `
 CREATE TYPE IF NOT EXISTS response_type (
     questions LIST<TEXT>,
-    responses LIST<TEXT>,
+    answers LIST<TEXT>,
     feedback LIST<TEXT>
 );
 `

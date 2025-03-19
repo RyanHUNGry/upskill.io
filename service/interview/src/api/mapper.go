@@ -1,3 +1,5 @@
+// Maps database structures to protobuf structures
+
 package api
 
 import "interview/src/db"

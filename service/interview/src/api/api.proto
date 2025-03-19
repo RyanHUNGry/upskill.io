@@ -1,14 +1,13 @@
 syntax = "proto3";
 package api;
 
-option go_package = "./api"; // relative path to the package
+option go_package = "./api"; // Relative path to the package
 
 service InterviewService {
     rpc CreateInterviewTemplateCall(CreateInterviewTemplate) returns (InterviewTemplate) {}
     rpc CreateConductedInterviewCall(CreateConductedInterview) returns (ConductedInterview) {}
 }
 
-// all bytes are uuids which are 16 bytes long under some encoding scheme, and timeuuids are just uuids with time
 message CreateInterviewTemplate {
     string company = 1;
     string role = 2;
@@ -32,9 +31,10 @@ message InterviewTemplate {
 }
 
 message ResponseType {
-    repeated string responses = 1;
+    repeated string responses = 1 [deprecated=true];
     repeated string feedback = 2;
     repeated string questions = 3;
+    repeated string answers = 4;
 }
 
 message CreateConductedInterview {

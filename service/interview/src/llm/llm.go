@@ -1,3 +1,3 @@
 package llm
 
-// initialize openAI client and interface with go-openai
+// wait for responses API support with go-openai
