@@ -29,7 +29,7 @@ func (service *InterviewServiceServerImpl) CreateInterviewTemplateCall(ctx conte
 }
 
 func (service *InterviewServiceServerImpl) CreateConductedInterviewCall(ctx context.Context, in *CreateConductedInterview) (*ConductedInterview, error) {
-	respType := db.ResponseType{Feedback: in.Responses.Feedback, Responses: in.Responses.Responses, Questions: in.Responses.Questions}
+	respType := db.ResponseType{Feedback: in.Responses.Feedback, Answers: in.Responses.Answers, Questions: in.Responses.Questions}
 	conductedInterviewId, err := service.session.CreateConductedIntervew(in.InterviewTemplateId, in.UserId, in.Score, in.Rating, in.Role, respType)
 
 	if err != nil {
@@ -42,4 +42,12 @@ func (service *InterviewServiceServerImpl) CreateConductedInterviewCall(ctx cont
 	}
 
 	return mapper.ConvertConductedInterviewToProto(conductedInterview), nil
+}
+
+func (service *InterviewServiceServerImpl) GetConductedInterviewsByUserCall(ctx context.Context, in *GetConductedInterviewsByUser) (*ConductedInterviews, error) {
+	return nil, nil
+}
+
+func (service *InterviewServiceServerImpl) GetInterviewTemplatesByUserCall(ctx context.Context, in *GetInterviewTemplatesByUser) (*InterviewTemplates, error) {
+	return nil, nil
 }

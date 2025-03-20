@@ -31,7 +31,7 @@ func (s InterviewServiceMapper) ConvertConductedInterviewToProto(conductedInterv
 		Role:                 conductedInterview.Role,
 		Responses: &ResponseType{
 			Feedback:  conductedInterview.Responses.Feedback,
-			Responses: conductedInterview.Responses.Responses,
+			Answers:   conductedInterview.Responses.Answers,
 			Questions: conductedInterview.Responses.Questions,
 		},
 	}

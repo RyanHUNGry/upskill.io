@@ -143,8 +143,8 @@ func TestCreateConductedInterviewCall(t *testing.T) {
 		UserId:      19,
 	}
 
-	templateResp, err := client.CreateInterviewTemplateCall(ctx, createInterviewTemplate)
-	interviewTemplateId := templateResp.InterviewTemplateId
+	interviewTemplate, err := client.CreateInterviewTemplateCall(ctx, createInterviewTemplate)
+	interviewTemplateId := interviewTemplate.InterviewTemplateId
 
 	if err != nil {
 		t.Errorf("error creating interview template: %v", err)
@@ -155,72 +155,69 @@ func TestCreateConductedInterviewCall(t *testing.T) {
 		UserId:              19,
 		Score:               86,
 		Rating:              4,
-		Role:                "Forward Deployed SWE",
+		Role:                interviewTemplate.Role,
 		Responses: &ResponseType{
-			Responses: []string{"Distributed transactions are a way to ensure consistency across distributed systems.", "CAP theorem states that a distributed system can only guarantee two of the following three properties: Consistency, Availability, and Partition Tolerance."},
+			Answers:   []string{"Distributed transactions are a way to ensure consistency across distributed systems.", "CAP theorem states that a distributed system can only guarantee two of the following three properties: Consistency, Availability, and Partition Tolerance."},
 			Feedback:  []string{"The answer is correct but could use more detail.", "Palantir requires a deeper understanding of CAP theorem, so please explain why only two properties can be guaranteed."},
-			Questions: templateResp.Questions,
+			Questions: interviewTemplate.Questions,
 		},
 	}
 
-	resp, err := client.CreateConductedInterviewCall(ctx, createConductedInterview)
+	conductedInterview, err := client.CreateConductedInterviewCall(ctx, createConductedInterview)
 
 	if err != nil {
 		t.Errorf("error creating conducted interview: %v", err)
 	}
 
-	for i := range resp.InterviewTemplateId {
-		b1 := resp.InterviewTemplateId[i]
-		b2 := interviewTemplateId[i]
-
-		if b1 != b2 {
-			t.Errorf("expected interview template id %v, got %v", interviewTemplateId, resp.InterviewTemplateId)
+	for i := range conductedInterview.InterviewTemplateId {
+		if conductedInterview.InterviewTemplateId[i] != interviewTemplateId[i] {
+			t.Errorf("expected interview template id %v, got %v", interviewTemplateId, conductedInterview.InterviewTemplateId)
 		}
 	}
 
-	if resp.UserId != createConductedInterview.UserId {
-		t.Errorf("expected userId %d, got %d", createConductedInterview.UserId, resp.UserId)
+	if conductedInterview.UserId != createConductedInterview.UserId {
+		t.Errorf("expected userId %d, got %d", createConductedInterview.UserId, conductedInterview.UserId)
 	}
 
-	if resp.Score != createConductedInterview.Score {
-		t.Errorf("expected score %d, got %d", createConductedInterview.Score, resp.Score)
+	if conductedInterview.Score != createConductedInterview.Score {
+		t.Errorf("expected score %d, got %d", createConductedInterview.Score, conductedInterview.Score)
 	}
 
-	if resp.Rating != createConductedInterview.Rating {
-		t.Errorf("expected rating %d, got %d", createConductedInterview.Rating, resp.Rating)
+	if conductedInterview.Rating != createConductedInterview.Rating {
+		t.Errorf("expected rating %d, got %d", createConductedInterview.Rating, conductedInterview.Rating)
 	}
 
-	if resp.Role != createConductedInterview.Role {
-		t.Errorf("expected role %s, got %s", createConductedInterview.Role, resp.Role)
+	if conductedInterview.Role != createConductedInterview.Role {
+		t.Errorf("expected role %s, got %s", createConductedInterview.Role, conductedInterview.Role)
 	}
 
-	if len(resp.Responses.Feedback) != len(createConductedInterview.Responses.Feedback) {
-		t.Errorf("expected feedback length %d, got %d", len(createConductedInterview.Responses.Feedback), len(resp.Responses.Feedback))
+	if len(conductedInterview.Responses.Feedback) != len(createConductedInterview.Responses.Feedback) {
+		t.Errorf("expected feedback length %d, got %d", len(createConductedInterview.Responses.Feedback), len(conductedInterview.Responses.Feedback))
 	}
 
-	if len(resp.Responses.Responses) != len(createConductedInterview.Responses.Responses) {
-		t.Errorf("expected responses length %d, got %d", len(createConductedInterview.Responses.Responses), len(resp.Responses.Responses))
+	if len(conductedInterview.Responses.Answers) != len(createConductedInterview.Responses.Answers) {
+		t.Errorf("expected responses length %d, got %d", len(createConductedInterview.Responses.Answers), len(conductedInterview.Responses.Answers))
 	}
 
-	if len(resp.Responses.Questions) != len(createConductedInterview.Responses.Questions) {
-		t.Errorf("expected questions length %d, got %d", len(createConductedInterview.Responses.Questions), len(resp.Responses.Questions))
+	if len(conductedInterview.Responses.Questions) != len(createConductedInterview.Responses.Questions) {
+		t.Errorf("expected questions length %d, got %d", len(createConductedInterview.Responses.Questions), len(conductedInterview.Responses.Questions))
 	}
 
 	for j, feedback := range createConductedInterview.Responses.Feedback {
-		if j < len(resp.Responses.Feedback) && resp.Responses.Feedback[j] != feedback {
-			t.Errorf("expected feedback %s, got %s at index %d", feedback, resp.Responses.Feedback[j], j)
+		if conductedInterview.Responses.Feedback[j] != feedback {
+			t.Errorf("expected feedback %s, got %s at index %d", feedback, conductedInterview.Responses.Feedback[j], j)
 		}
 	}
 
-	for j, responses := range createConductedInterview.Responses.Responses {
-		if j < len(resp.Responses.Responses) && resp.Responses.Responses[j] != responses {
-			t.Errorf("expected responses %s, got %s at index %d", responses, resp.Responses.Responses[j], j)
+	for j, answer := range createConductedInterview.Responses.Answers {
+		if conductedInterview.Responses.Answers[j] != answer {
+			t.Errorf("expected answer %s, got %s at index %d", answer, conductedInterview.Responses.Answers[j], j)
 		}
 	}
 
 	for j, question := range createConductedInterview.Responses.Questions {
-		if j < len(resp.Responses.Questions[j]) && resp.Responses.Questions[j] != question {
-			t.Errorf("expected question %s, got %s at index %d", question, resp.Responses.Questions[j], j)
+		if conductedInterview.Responses.Questions[j] != question {
+			t.Errorf("expected question %s, got %s at index %d", question, conductedInterview.Responses.Questions[j], j)
 		}
 	}
 }
@@ -229,7 +226,7 @@ func TestMain(m *testing.M) {
 	run := func() int {
 		defer grpcCloser()
 		defer database.Session.Close()
-		// defer table.DropAllTables(database.Session, context.Background()) // remember that defer is LIFO, meaning this runs first...
+		defer table.DropAllTables(database.Session, context.Background()) // Note defer statements are LIFO order
 		fmt.Println("Running tests through TestMain() entrypoint")
 		statusCode := m.Run()
 		return statusCode

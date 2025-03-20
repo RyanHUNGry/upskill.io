@@ -19,8 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	InterviewService_CreateInterviewTemplateCall_FullMethodName  = "/api.InterviewService/CreateInterviewTemplateCall"
-	InterviewService_CreateConductedInterviewCall_FullMethodName = "/api.InterviewService/CreateConductedInterviewCall"
+	InterviewService_CreateInterviewTemplateCall_FullMethodName      = "/api.InterviewService/CreateInterviewTemplateCall"
+	InterviewService_CreateConductedInterviewCall_FullMethodName     = "/api.InterviewService/CreateConductedInterviewCall"
+	InterviewService_GetConductedInterviewsByUserCall_FullMethodName = "/api.InterviewService/GetConductedInterviewsByUserCall"
+	InterviewService_GetInterviewTemplatesByUserCall_FullMethodName  = "/api.InterviewService/GetInterviewTemplatesByUserCall"
 )
 
 // InterviewServiceClient is the client API for InterviewService service.
@@ -29,6 +31,8 @@ const (
 type InterviewServiceClient interface {
 	CreateInterviewTemplateCall(ctx context.Context, in *CreateInterviewTemplate, opts ...grpc.CallOption) (*InterviewTemplate, error)
 	CreateConductedInterviewCall(ctx context.Context, in *CreateConductedInterview, opts ...grpc.CallOption) (*ConductedInterview, error)
+	GetConductedInterviewsByUserCall(ctx context.Context, in *GetConductedInterviewsByUser, opts ...grpc.CallOption) (*ConductedInterviews, error)
+	GetInterviewTemplatesByUserCall(ctx context.Context, in *GetInterviewTemplatesByUser, opts ...grpc.CallOption) (*InterviewTemplates, error)
 }
 
 type interviewServiceClient struct {
@@ -59,12 +63,34 @@ func (c *interviewServiceClient) CreateConductedInterviewCall(ctx context.Contex
 	return out, nil
 }
 
+func (c *interviewServiceClient) GetConductedInterviewsByUserCall(ctx context.Context, in *GetConductedInterviewsByUser, opts ...grpc.CallOption) (*ConductedInterviews, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConductedInterviews)
+	err := c.cc.Invoke(ctx, InterviewService_GetConductedInterviewsByUserCall_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *interviewServiceClient) GetInterviewTemplatesByUserCall(ctx context.Context, in *GetInterviewTemplatesByUser, opts ...grpc.CallOption) (*InterviewTemplates, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InterviewTemplates)
+	err := c.cc.Invoke(ctx, InterviewService_GetInterviewTemplatesByUserCall_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InterviewServiceServer is the server API for InterviewService service.
 // All implementations must embed UnimplementedInterviewServiceServer
 // for forward compatibility.
 type InterviewServiceServer interface {
 	CreateInterviewTemplateCall(context.Context, *CreateInterviewTemplate) (*InterviewTemplate, error)
 	CreateConductedInterviewCall(context.Context, *CreateConductedInterview) (*ConductedInterview, error)
+	GetConductedInterviewsByUserCall(context.Context, *GetConductedInterviewsByUser) (*ConductedInterviews, error)
+	GetInterviewTemplatesByUserCall(context.Context, *GetInterviewTemplatesByUser) (*InterviewTemplates, error)
 	mustEmbedUnimplementedInterviewServiceServer()
 }
 
@@ -80,6 +106,12 @@ func (UnimplementedInterviewServiceServer) CreateInterviewTemplateCall(context.C
 }
 func (UnimplementedInterviewServiceServer) CreateConductedInterviewCall(context.Context, *CreateConductedInterview) (*ConductedInterview, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateConductedInterviewCall not implemented")
+}
+func (UnimplementedInterviewServiceServer) GetConductedInterviewsByUserCall(context.Context, *GetConductedInterviewsByUser) (*ConductedInterviews, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConductedInterviewsByUserCall not implemented")
+}
+func (UnimplementedInterviewServiceServer) GetInterviewTemplatesByUserCall(context.Context, *GetInterviewTemplatesByUser) (*InterviewTemplates, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInterviewTemplatesByUserCall not implemented")
 }
 func (UnimplementedInterviewServiceServer) mustEmbedUnimplementedInterviewServiceServer() {}
 func (UnimplementedInterviewServiceServer) testEmbeddedByValue()                          {}
@@ -138,6 +170,42 @@ func _InterviewService_CreateConductedInterviewCall_Handler(srv interface{}, ctx
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InterviewService_GetConductedInterviewsByUserCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConductedInterviewsByUser)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InterviewServiceServer).GetConductedInterviewsByUserCall(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InterviewService_GetConductedInterviewsByUserCall_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InterviewServiceServer).GetConductedInterviewsByUserCall(ctx, req.(*GetConductedInterviewsByUser))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InterviewService_GetInterviewTemplatesByUserCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInterviewTemplatesByUser)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InterviewServiceServer).GetInterviewTemplatesByUserCall(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InterviewService_GetInterviewTemplatesByUserCall_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InterviewServiceServer).GetInterviewTemplatesByUserCall(ctx, req.(*GetInterviewTemplatesByUser))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InterviewService_ServiceDesc is the grpc.ServiceDesc for InterviewService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +220,14 @@ var InterviewService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateConductedInterviewCall",
 			Handler:    _InterviewService_CreateConductedInterviewCall_Handler,
+		},
+		{
+			MethodName: "GetConductedInterviewsByUserCall",
+			Handler:    _InterviewService_GetConductedInterviewsByUserCall_Handler,
+		},
+		{
+			MethodName: "GetInterviewTemplatesByUserCall",
+			Handler:    _InterviewService_GetInterviewTemplatesByUserCall_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
