@@ -24,7 +24,7 @@ type InterviewTemplate struct {
 // using struct (un)marshalling
 type ResponseType struct {
 	Feedback  []string `cql:"feedback"`
-	Responses []string `cql:"responses"`
+	Answers   []string `cql:"answers"`
 	Questions []string `cql:"questions"`
 }
 

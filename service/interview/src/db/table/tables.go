@@ -9,7 +9,6 @@ import (
 )
 
 func InitializeTables(session *gocql.Session, ctx context.Context) {
-
 	var table string
 	err := session.Query("SELECT table_name FROM system_schema.tables WHERE keyspace_name = 'interview';").WithContext(ctx).Scan(&table)
 	tablesCreated := table != ""
