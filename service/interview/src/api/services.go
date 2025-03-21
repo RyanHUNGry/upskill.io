@@ -22,7 +22,7 @@ func (service *InterviewServiceServerImpl) CreateInterviewTemplateCall(ctx conte
 		return nil, err
 	}
 
-	interviewTemplate, err := service.Database.FindInterviewTemplateById(interviewTemplateId)
+	interviewTemplate, _, err := service.Database.FindInterviewTemplateById(interviewTemplateId)
 	if err != nil {
 		return nil, err
 	}
@@ -78,5 +78,5 @@ func (service *InterviewServiceServerImpl) GetInterviewTemplatesByUserCall(ctx c
 		return nil, err
 	}
 
-	return &InterviewTemplates{InterviewTemplates: utils.FunctionMap(interviewTemplates, ConvertInterviewTemplateToProto())}, nil
+	return &InterviewTemplates{InterviewTemplates: utils.FunctionMap(interviewTemplates, ConvertInterviewTemplateToProto)}, nil
 }

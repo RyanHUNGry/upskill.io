@@ -60,6 +60,8 @@ func initializeCassandra() {
 
 	// Initialize table only for an empty database
 	table.InitializeTables(db.Session, db.Ctx)
+	fmt.Println("Cassandra initialized ✅")
+	<-blockingChannel
 }
 
 // Initialize gRPC server
@@ -77,5 +79,6 @@ func initializeGrpc() {
 		Database: <-databaseChannel,
 	}
 	api.RegisterInterviewServiceServer(grpcServer, interviewServiceImpl)
+	fmt.Println("gRPC Server initialized ✅")
 	grpcServer.Serve(lis)
 }
