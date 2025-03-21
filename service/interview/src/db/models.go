@@ -5,6 +5,10 @@ import (
 	// api package should reference this db package, but not the other way around
 	// this ensures modularity and separation of concerns
 
+	"errors"
+	"interview/src/utils"
+	"strings"
+
 	"github.com/gocql/gocql"
 )
 
@@ -84,29 +88,85 @@ func (db *Database) CreateInterviewTemplate(
 	return timeuuid, nil
 }
 
-func (db *Database) FindInterviewTemplateById(templateId gocql.UUID) (*InterviewTemplate, error) {
-	query := `SELECT * FROM interview_templates WHERE interview_template_id = ?`
-
-	var template InterviewTemplate
-
-	err := db.Session.Query(query, templateId).WithContext(db.Ctx).Scan(
-		&template.InterviewTemplateID,
-		&template.AmountConducted,
-		&template.AverageRating,
-		&template.AverageScore,
-		&template.Company,
-		&template.Description,
-		&template.Questions,
-		&template.Role,
-		&template.Skills,
-		&template.UserID,
-	)
-
-	if err != nil {
-		return nil, err
+// Find single interview template by ID, or find a set of interview templates by multiple IDs
+func (db *Database) FindInterviewTemplateById(interviewTemplateId any) (*InterviewTemplate, []*InterviewTemplate, error) {
+	columns := []string{
+		"interview_template_id",
+		"amount_conducted",
+		"average_rating",
+		"average_score",
+		"company",
+		"description",
+		"questions",
+		"role",
+		"skills",
+		"user_id",
 	}
 
-	return &template, nil
+	if _, ok := interviewTemplateId.(gocql.UUID); ok {
+		interviewTemplateId := interviewTemplateId.(gocql.UUID)
+		query := `SELECT ` + strings.Join(columns, ", ") + ` FROM interview_templates WHERE interview_template_id = ?`
+		var interviewTemplate InterviewTemplate
+		err := db.Session.Query(query, interviewTemplateId).WithContext(db.Ctx).Scan(
+			&interviewTemplate.InterviewTemplateID,
+			&interviewTemplate.AmountConducted,
+			&interviewTemplate.AverageRating,
+			&interviewTemplate.AverageScore,
+			&interviewTemplate.Company,
+			&interviewTemplate.Description,
+			&interviewTemplate.Questions,
+			&interviewTemplate.Role,
+			&interviewTemplate.Skills,
+			&interviewTemplate.UserID,
+		)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return &interviewTemplate, nil, nil
+	} else if interviewTemplateIds, ok := interviewTemplateId.([]gocql.UUID); ok {
+		conditions := make([]string, 0, len(interviewTemplateIds))
+		for range interviewTemplateIds {
+			conditions = append(conditions, "?")
+		}
+
+		query := `SELECT ` + strings.Join(columns, ", ") + ` FROM interview_templates WHERE interview_template_id in (` + strings.Join(conditions, ", ") + `);`
+
+		// Under the hood, the variadic arguments for Query() is a []interface{} so cast IDs
+		scanner := db.Session.Query(query, utils.AnySliceConverter(interviewTemplateIds)...).WithContext(db.Ctx).Iter().Scanner()
+		var interviewTemplates []*InterviewTemplate
+
+		for scanner.Next() {
+			var interviewTemplate InterviewTemplate
+			err := scanner.Scan(
+				&interviewTemplate.InterviewTemplateID,
+				&interviewTemplate.AmountConducted,
+				&interviewTemplate.AverageRating,
+				&interviewTemplate.AverageScore,
+				&interviewTemplate.Company,
+				&interviewTemplate.Description,
+				&interviewTemplate.Questions,
+				&interviewTemplate.Role,
+				&interviewTemplate.Skills,
+				&interviewTemplate.UserID,
+			)
+
+			interviewTemplates = append(interviewTemplates, &interviewTemplate)
+
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			return nil, nil, err
+		}
+
+		return nil, interviewTemplates, nil
+	} else {
+		return nil, nil, errors.New("invalid type for interviewTemplateId")
+	}
 }
 
 func (db *Database) CreateConductedIntervew(
@@ -150,31 +210,152 @@ func (db *Database) CreateConductedIntervew(
 	return conductedInterviewId, nil
 }
 
-func (db *Database) FindConductedInterviewById(conductedInterviewId gocql.UUID) (*ConductedInterview, error) {
-	order := `conducted_interview_id,
-	interview_template_id,
-	score,
-	user_id,
-	role,
-	rating,
-	responses`
-	query := `SELECT ` + order + ` FROM conducted_interviews WHERE conducted_interview_id = ?`
+// Find single conducted interview by ID, or find a set of conducted interview by multiple IDs
+func (db *Database) FindConductedInterviewById(conductedInterviewId any) (*ConductedInterview, []*ConductedInterview, error) {
+	columns := []string{
+		"conducted_interview_id",
+		"interview_template_id",
+		"score",
+		"user_id",
+		"role",
+		"rating",
+		"responses",
+	}
 
-	var conductedInterview ConductedInterview
+	if _, ok := conductedInterviewId.(gocql.UUID); ok {
+		conductedInterviewId := conductedInterviewId.(gocql.UUID)
+		query := `SELECT ` + strings.Join(columns, ", ") + ` FROM conducted_interviews WHERE conducted_interview_id = ?`
+		var conductedInterview ConductedInterview
+		err := db.Session.Query(query, conductedInterviewId).WithContext(db.Ctx).Scan(
+			&conductedInterview.ConductedInterviewId,
+			&conductedInterview.InterviewTemplateId,
+			&conductedInterview.Score,
+			&conductedInterview.UserId,
+			&conductedInterview.Role,
+			&conductedInterview.Rating,
+			&conductedInterview.Responses,
+		)
 
-	err := db.Session.Query(query, conductedInterviewId).WithContext(db.Ctx).Scan(
-		&conductedInterview.ConductedInterviewId,
-		&conductedInterview.InterviewTemplateId,
-		&conductedInterview.Score,
-		&conductedInterview.UserId,
-		&conductedInterview.Role,
-		&conductedInterview.Rating,
-		&conductedInterview.Responses,
-	)
+		if err != nil {
+			return nil, nil, err
+		}
 
-	if err != nil {
+		return &conductedInterview, nil, err
+	} else if conductedInterviewIds, ok := conductedInterviewId.([]gocql.UUID); ok {
+		conditions := make([]string, 0, len(conductedInterviewIds))
+		for range conductedInterviewIds {
+			conditions = append(conditions, "?")
+		}
+
+		query := `SELECT ` + strings.Join(columns, ", ") + ` FROM conducted_interviews WHERE conducted_interview_id in (` + strings.Join(conditions, ", ") + `);`
+
+		// Under the hood, the variadic arguments for Query() is a []interface{} so cast IDs
+		scanner := db.Session.Query(query, utils.AnySliceConverter(conductedInterviewIds)...).WithContext(db.Ctx).Iter().Scanner()
+		var conductedInterviews []*ConductedInterview
+
+		for scanner.Next() {
+			var conductedInterview ConductedInterview
+			err := scanner.Scan(
+				&conductedInterview.ConductedInterviewId,
+				&conductedInterview.InterviewTemplateId,
+				&conductedInterview.Score,
+				&conductedInterview.UserId,
+				&conductedInterview.Role,
+				&conductedInterview.Rating,
+				&conductedInterview.Responses,
+			)
+
+			conductedInterviews = append(conductedInterviews, &conductedInterview)
+
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			return nil, nil, err
+		}
+
+		return nil, conductedInterviews, nil
+	} else {
+		return nil, nil, errors.New("invalid type for conductedInterviewId")
+	}
+}
+
+func (db *Database) FindInterviewTemplateIdsByUserId(userId int32) (interviewTemplateIds []gocql.UUID, err error) {
+	columns := []string{
+		"user_id",
+		"interview_template_id",
+	}
+	query := `SELECT ` + strings.Join(columns, ", ") + ` FROM interview_templates_by_user WHERE user_id = ?`
+	scanner := db.Session.Query(query, userId).WithContext(db.Ctx).Iter().Scanner()
+
+	for scanner.Next() {
+		var user_id int32
+		var interview_template_id gocql.UUID
+
+		err := scanner.Scan(&user_id, &interview_template_id)
+
+		interviewTemplateIds = append(interviewTemplateIds, interview_template_id)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 
-	return &conductedInterview, nil
+	return interviewTemplateIds, nil
+}
+
+func (db *Database) FindConductedInterviewIdsByUserId(userId int32) (conductedInterviewIds []gocql.UUID, err error) {
+	columns := []string{
+		"user_id",
+		"conducted_interview_id",
+	}
+	query := `SELECT ` + strings.Join(columns, ", ") + ` FROM conducted_interviews_by_user WHERE user_id = ?`
+	scanner := db.Session.Query(query, userId).WithContext(db.Ctx).Iter().Scanner()
+
+	for scanner.Next() {
+		var user_id int32
+		var conducted_interview_id gocql.UUID
+
+		err := scanner.Scan(&user_id, &conducted_interview_id)
+
+		conductedInterviewIds = append(conductedInterviewIds, conducted_interview_id)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return conductedInterviewIds, nil
+}
+
+func (db *Database) InsertUserIdAndConductedInterviewId(userId int32, conductedInterviewId gocql.UUID) error {
+	columns := []string{"conducted_interview_id", "user_id"}
+	query := `INSERT INTO conducted_interviews_by_user (` + strings.Join(columns, ", ") + `) VALUES (?, ?)`
+
+	err := db.Session.Query(query, conductedInterviewId, userId).WithContext(db.Ctx).Exec()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db *Database) InsertUserIdAndInterviewTemplateId(userId int32, interviewTemplateId gocql.UUID) error {
+	columns := []string{"interview_template_id", "user_id"}
+	query := `INSERT INTO interview_templates_by_user (` + strings.Join(columns, ", ") + `) VALUES (?, ?)`
+
+	err := db.Session.Query(query, interviewTemplateId, userId).WithContext(db.Ctx).Exec()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

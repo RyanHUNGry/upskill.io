@@ -4,9 +4,7 @@ package api
 
 import "interview/src/db"
 
-type InterviewServiceMapper struct{}
-
-func (s InterviewServiceMapper) ConvertInterviewTemplateToProto(interviewTemplate *db.InterviewTemplate) *InterviewTemplate {
+func ConvertInterviewTemplateToProto(interviewTemplate *db.InterviewTemplate) *InterviewTemplate {
 	return &InterviewTemplate{
 		InterviewTemplateId: interviewTemplate.InterviewTemplateID[:],
 		AverageScore:        interviewTemplate.AverageScore,
@@ -21,7 +19,7 @@ func (s InterviewServiceMapper) ConvertInterviewTemplateToProto(interviewTemplat
 	}
 }
 
-func (s InterviewServiceMapper) ConvertConductedInterviewToProto(conductedInterview *db.ConductedInterview) *ConductedInterview {
+func ConvertConductedInterviewToProto(conductedInterview *db.ConductedInterview) *ConductedInterview {
 	return &ConductedInterview{
 		ConductedInterviewId: conductedInterview.ConductedInterviewId[:],
 		InterviewTemplateId:  conductedInterview.InterviewTemplateId[:],

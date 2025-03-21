@@ -68,10 +68,8 @@ message ConductedInterviews {
 
 message GetConductedInterviewsByUser {
     int32 user_id = 1;
-    bytes conducted_interview_id = 2;
 }
 
 message GetInterviewTemplatesByUser {
     int32 user_id = 1;
-    bytes interview_template_id = 2;
 }
