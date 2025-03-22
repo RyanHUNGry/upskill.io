@@ -14,6 +14,7 @@ type AsyncLogGenerator struct {
 func InitializeAsyncLogGenerator(brokerList []string, version sarama.KafkaVersion) (AsyncLogGenerator, error) {
 	saramaConfig := sarama.NewConfig()
 	saramaConfig.Version = version
+	saramaConfig.Producer.Return.Successes = true
 	// Only wait for the leader to acknowledge
 	saramaConfig.Producer.RequiredAcks = sarama.WaitForLocal
 	// Compress messages

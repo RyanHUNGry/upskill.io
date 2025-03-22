@@ -14,8 +14,10 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/IBM/sarama"
 	kitlog "github.com/go-kit/log"
@@ -28,10 +30,16 @@ import (
 var (
 	databaseChannel chan *db.Database               = make(chan *db.Database)
 	producerChannel chan producer.AsyncLogGenerator = make(chan producer.AsyncLogGenerator)
-	blockingChannel chan *struct{}                  = make(chan *struct{})
+	sigIntChannel   chan os.Signal                  = make(chan os.Signal, 1)
 )
 
 func main() {
+	// Trap SIGINT to gracefully shutdown, propagating signal via context
+	rootCtx := context.Background()
+	signal.Notify(sigIntChannel, syscall.SIGINT)
+	ctx, cancel := context.WithCancel(rootCtx)
+
+	// Load environment variables
 	envFileName := "interview.env"
 	envFilePath := filepath.Join(utils.GetWorkingDirectory(), envFileName)
 	err := godotenv.Load(envFilePath)
@@ -40,15 +48,17 @@ func main() {
 		log.Fatalf("Error loading %s file", envFileName)
 	}
 
-	go initializeKafka()
-	go initializeGrpc()
-	go initializeCassandra()
+	go initializeKafka(ctx)
+	go initializeGrpc(ctx)
+	go initializeCassandra(ctx)
 
-	<-blockingChannel
+	// Under the hood, cancel() calls close(ctx.Done()) which causes <-ctx.Done() to return a value immediately
+	<-sigIntChannel
+	cancel()
 }
 
-func initializeKafka() {
-	// Kafka in Docker runs with latest 4.0.0 version
+func initializeKafka(ctx context.Context) {
+	// Kafka in Docker runs with latest 4.0.0 image version
 	kafkaVersion := sarama.MaxVersion
 	kafkaBrokers := os.Getenv("KAFKA_PEERS")
 	brokerList := strings.Split(kafkaBrokers, ",")
@@ -59,19 +69,21 @@ func initializeKafka() {
 	if err != nil {
 		log.Fatalf("Error initializing Kafka producer: %v", err)
 	}
-
 	defer asyncLogGenerator.Close()
 
 	fmt.Println("Kafka initialized ✅")
-	<-blockingChannel
+
+	select {
+	case <-ctx.Done():
+		return
+	}
 }
 
-func initializeCassandra() {
+func initializeCassandra(ctx context.Context) {
 	cassandraHost := os.Getenv("CASSANDRA_HOST")
 	cassandraPort := os.Getenv("CASSANDRA_PORT")
 
-	dbContext := context.Background()
-	db, err := db.Connect(cassandraHost, cassandraPort, dbContext)
+	db, err := db.Connect(cassandraHost, cassandraPort, ctx)
 	if err != nil {
 		log.Fatal("Database connection failed")
 	}
@@ -88,11 +100,15 @@ func initializeCassandra() {
 	// Initialize table only for an empty database
 	table.InitializeTables(db.Session, db.Ctx)
 	fmt.Println("Cassandra initialized ✅")
-	<-blockingChannel
+
+	select {
+	case <-ctx.Done():
+		return
+	}
 }
 
 // Initialize gRPC server
-func initializeGrpc() {
+func initializeGrpc(ctx context.Context) {
 	grpcPort := os.Getenv("GRPC_PORT")
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:"+grpcPort))
 
@@ -100,8 +116,31 @@ func initializeGrpc() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	asyncLogGenerator := <-producerChannel
 	logger := kitlog.NewLogfmtLogger(os.Stdout)
+	asyncLogGenerator := <-producerChannel
+
+	// From the logging thread, producer will send success or failiure messages to these logging threads
+	go func(ctx context.Context) {
+		for {
+			select {
+			case producerSuccessMessage := <-asyncLogGenerator.Producer.Successes():
+				log.Printf("Produced message to topic %s at offset %d\n", producerSuccessMessage.Topic, producerSuccessMessage.Offset)
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(ctx)
+	go func(ctx context.Context) {
+		for {
+			select {
+			case producerErrorMessage := <-asyncLogGenerator.Producer.Errors():
+				log.Printf("Failed to produce message: %v\n", producerErrorMessage.Err)
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(ctx)
+
 	interceptorLogger := func(l kitlog.Logger) logging.Logger {
 		// The logging.LoggerFunc type is a typed function implementing logging.Logger interface so type convert ordinary function to be of logging.LoggerFunc
 		return logging.LoggerFunc(func(_ context.Context, lvl logging.Level, msg string, fields ...any) {
@@ -134,11 +173,6 @@ func initializeGrpc() {
 				Key:   keyEncoder,
 				Value: valueEncoder,
 			}
-
-			// figure out how to get the producer errors that are generated in another goroutine
-			// we should log the error here, but keep the thread alive
-			// producerErr := <-asyncLogGenerator.Producer.Errors()
-			// fmt.Println(producerErr.Err)
 		})
 	}
 
@@ -158,5 +192,12 @@ func initializeGrpc() {
 	}
 	api.RegisterInterviewServiceServer(grpcServer, interviewServiceImpl)
 	fmt.Println("gRPC Server initialized ✅")
+
+	go func() {
+		defer grpcServer.GracefulStop()
+		<-ctx.Done()
+		return
+	}()
+
 	grpcServer.Serve(lis)
 }
