@@ -1,0 +1,10 @@
+# local 1-node cassandra dev cluster
+services:
+  cassandra-1: # seed node
+    image: "cassandra:latest"
+    ports:
+      - "9042:9042" # client port
+
+networks:
+  cassandra-network:
+    driver: bridge

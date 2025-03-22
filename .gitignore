@@ -1,2 +1,4 @@
-.env
-/tmp
+**/__pycache__
+**/.env
+/service/interview/*.env
+**/tmp

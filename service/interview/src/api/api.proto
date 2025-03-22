@@ -1,0 +1,75 @@
+syntax = "proto3";
+package api;
+
+option go_package = "./api"; // Relative path to the package
+
+service InterviewService {
+    rpc CreateInterviewTemplateCall(CreateInterviewTemplate) returns (InterviewTemplate) {}
+    rpc CreateConductedInterviewCall(CreateConductedInterview) returns (ConductedInterview) {}
+    rpc GetConductedInterviewsByUserCall(GetConductedInterviewsByUser) returns (ConductedInterviews) {}
+    rpc GetInterviewTemplatesByUserCall(GetInterviewTemplatesByUser) returns (InterviewTemplates) {}
+}
+
+message CreateInterviewTemplate {
+    string company = 1;
+    string role = 2;
+    repeated string skills = 3;
+    string description = 4;
+    repeated string questions = 5;
+    int32 user_id = 6;
+}
+
+message InterviewTemplates {
+    repeated InterviewTemplate interview_templates = 1;
+}
+
+message InterviewTemplate {
+    bytes interview_template_id = 1;
+    int32 average_score = 2;
+    int32 average_rating = 3;
+    int32 amount_conducted = 4;
+    string company = 5;
+    string role = 6;
+    repeated string skills = 7;
+    string description = 8;
+    repeated string questions = 9;
+    int32 user_id = 10;
+}
+
+message ResponseType {
+    repeated string responses = 1 [deprecated=true];
+    repeated string feedback = 2;
+    repeated string questions = 3;
+    repeated string answers = 4;
+}
+
+message CreateConductedInterview {
+    bytes interview_template_id = 1;
+    int32 user_id = 2;
+    int32 score = 3;
+    int32 rating = 4;
+    string role = 5;
+    ResponseType responses = 6;
+}
+
+message ConductedInterview {
+    bytes conducted_interview_id = 1;
+    bytes interview_template_id = 2;
+    int32 user_id = 3;
+    int32 score = 4;
+    int32 rating = 5;
+    string role = 6;
+    ResponseType responses = 7;
+}
+
+message ConductedInterviews {
+    repeated ConductedInterview conducted_interviews = 1;
+}
+
+message GetConductedInterviewsByUser {
+    int32 user_id = 1;
+}
+
+message GetInterviewTemplatesByUser {
+    int32 user_id = 1;
+}
