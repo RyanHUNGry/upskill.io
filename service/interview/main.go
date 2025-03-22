@@ -142,6 +142,7 @@ func initializeGrpc() {
 		})
 	}
 
+	// For verbosity reasons only as defaults options log gRPC from start to finish
 	var loggingOption []logging.Option = []logging.Option{
 		logging.WithLogOnEvents(logging.StartCall, logging.FinishCall),
 	}
