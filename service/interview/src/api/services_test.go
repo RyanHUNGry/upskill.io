@@ -60,8 +60,8 @@ func initTestServer(ctx context.Context) (InterviewServiceClient, func(), *db.Da
 	var dialOpts []grpc.DialOption
 	dialOpts = append(dialOpts,
 		grpc.WithContextDialer(
-			func(ctx context.Context, s string) (net.Conn, error) {
-				// override the default TCP net.conn used for remote dialing with the bufconn connection
+			func(ctx context.Context, _ string) (net.Conn, error) {
+				// Override the default TCP net.conn used for remote dialing with an in-memory full-duplex connection
 				conn, err := lis.DialContext(ctx)
 				if err != nil {
 					log.Printf("error dialing: %v", err)
@@ -73,8 +73,7 @@ func initTestServer(ctx context.Context) (InterviewServiceClient, func(), *db.Da
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 
-	// using passthrough resolver: https://github.com/grpc/grpc-go/blob/v1.64.0/internal/resolver/passthrough/passthrough.go
-	// does not map host to an address, just returns the address as-is, but still isn't used by *bufconn.Listener
+	// Prefix the address to specify passthrough resolver, which passes the address as-is to the dialer without DNS resolution so that dialer can use the in-memory connection
 	passthroughAddress := "passthrough:///ARBITRARYADDRESS:21"
 	conn, err := grpc.NewClient(passthroughAddress, dialOpts...)
 

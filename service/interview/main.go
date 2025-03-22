@@ -9,12 +9,15 @@ import (
 	"interview/src/api"
 	"interview/src/db"
 	"interview/src/db/table"
+	"interview/src/producer"
 	"interview/src/utils"
 	"log"
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/IBM/sarama"
 	kitlog "github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
@@ -23,8 +26,9 @@ import (
 )
 
 var (
-	databaseChannel chan *db.Database = make(chan *db.Database)
-	blockingChannel chan *struct{}    = make(chan *struct{})
+	databaseChannel chan *db.Database               = make(chan *db.Database)
+	producerChannel chan producer.AsyncLogGenerator = make(chan producer.AsyncLogGenerator)
+	blockingChannel chan *struct{}                  = make(chan *struct{})
 )
 
 func main() {
@@ -36,9 +40,29 @@ func main() {
 		log.Fatalf("Error loading %s file", envFileName)
 	}
 
+	go initializeKafka()
 	go initializeGrpc()
 	go initializeCassandra()
 
+	<-blockingChannel
+}
+
+func initializeKafka() {
+	// Kafka in Docker runs with latest 4.0.0 version
+	kafkaVersion := sarama.MaxVersion
+	kafkaBrokers := os.Getenv("KAFKA_PEERS")
+	brokerList := strings.Split(kafkaBrokers, ",")
+
+	asyncLogGenerator, err := producer.InitializeAsyncLogGenerator(brokerList, kafkaVersion)
+	producerChannel <- asyncLogGenerator
+
+	if err != nil {
+		log.Fatalf("Error initializing Kafka producer: %v", err)
+	}
+
+	defer asyncLogGenerator.Close()
+
+	fmt.Println("Kafka initialized ✅")
 	<-blockingChannel
 }
 
@@ -76,6 +100,7 @@ func initializeGrpc() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	asyncLogGenerator := <-producerChannel
 	logger := kitlog.NewLogfmtLogger(os.Stdout)
 	interceptorLogger := func(l kitlog.Logger) logging.Logger {
 		// The logging.LoggerFunc type is a typed function implementing logging.Logger interface so type convert ordinary function to be of logging.LoggerFunc
@@ -93,6 +118,27 @@ func initializeGrpc() {
 			default:
 				panic(fmt.Sprintf("unknown level %v", lvl))
 			}
+
+			var grpcStartTime string
+			for i, field := range fields {
+				if field.(string) == "grpc.start_time" {
+					grpcStartTime = fields[i+1].(string)
+					break
+				}
+			}
+			var keyEncoder sarama.StringEncoder = sarama.StringEncoder(grpcStartTime)
+			var valueEncoder sarama.StringEncoder = sarama.StringEncoder(fmt.Sprintf("%v", largs))
+
+			asyncLogGenerator.Producer.Input() <- &sarama.ProducerMessage{
+				Topic: "interview_service_logs",
+				Key:   keyEncoder,
+				Value: valueEncoder,
+			}
+
+			// figure out how to get the producer errors that are generated in another goroutine
+			// we should log the error here, but keep the thread alive
+			// producerErr := <-asyncLogGenerator.Producer.Errors()
+			// fmt.Println(producerErr.Err)
 		})
 	}
 
