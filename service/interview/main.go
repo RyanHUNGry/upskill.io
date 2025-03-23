@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/IBM/sarama"
 	kitlog "github.com/go-kit/log"
@@ -55,6 +56,8 @@ func main() {
 	// Under the hood, cancel() calls close(ctx.Done()) which causes <-ctx.Done() to return a value immediately
 	<-sigIntChannel
 	cancel()
+	fmt.Println("Shutting down gracefully...")
+	time.Sleep(2 * time.Second)
 }
 
 func initializeKafka(ctx context.Context) {

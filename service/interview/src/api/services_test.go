@@ -42,11 +42,11 @@ func initTestServer(ctx context.Context) (InterviewServiceClient, func(), *db.Da
 			log.Printf("error connecting to database: %v", err)
 		}
 
-		interviewServiceServerImpl := &InterviewServiceServerImpl{session: dbSession}
+		interviewServiceServerImpl := &InterviewServiceServerImpl{Database: dbSession}
 
 		RegisterInterviewServiceServer(grpcServer, interviewServiceServerImpl)
 
-		// client will block until server is listening
+		// Client will block until server is listening
 		go func() {
 			if err := grpcServer.Serve(lis); err != nil {
 				log.Printf("error serving server: %v", err)
