@@ -3,6 +3,7 @@ package utils
 import (
 	"log"
 	"os"
+	"strings"
 )
 
 // Generic map function
@@ -25,10 +26,17 @@ func AnySliceConverter[S any](slice []S) []any {
 
 func GetWorkingDirectory() string {
 	dir, err := os.Getwd()
-
 	if err != nil {
 		log.Fatal("Failed to get working directory")
 	}
-
 	return dir
+}
+
+func GenerateConditions(arr []string) string {
+	conditions := make([]string, 0, len(arr))
+	for range arr {
+		conditions = append(conditions, "?")
+	}
+
+	return "(" + strings.Join(conditions, ", ") + ")"
 }

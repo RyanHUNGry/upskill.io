@@ -50,6 +50,7 @@ message CreateConductedInterview {
     int32 rating = 4;
     string role = 5;
     ResponseType responses = 6;
+    string company = 7;
 }
 
 message ConductedInterview {
@@ -72,4 +73,17 @@ message GetConductedInterviewsByUser {
 
 message GetInterviewTemplatesByUser {
     int32 user_id = 1;
+}
+
+message RoleAndCompany {
+    string role = 1;
+    string company = 2;
+    optional bytes interview_template_id = 3;
+}
+
+message AverageScoresByRoleAndCompany {
+    string role = 1;
+    string company = 2;
+    bytes interview_template_id = 3;
+    int32 average_score = 4;
 }

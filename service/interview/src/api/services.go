@@ -4,6 +4,8 @@ import (
 	context "context"
 	"interview/src/db"
 	"interview/src/utils"
+
+	"github.com/gocql/gocql"
 )
 
 type InterviewServiceServerImpl struct {
@@ -18,6 +20,11 @@ func (service *InterviewServiceServerImpl) CreateInterviewTemplateCall(ctx conte
 	}
 
 	err = service.Database.InsertUserIdAndInterviewTemplateId(in.UserId, interviewTemplateId)
+	if err != nil {
+		return nil, err
+	}
+
+	err = service.Database.InsertRoleAndCompanyInterviewTemplateId(in.Role, in.Company, interviewTemplateId)
 	if err != nil {
 		return nil, err
 	}
@@ -37,6 +44,18 @@ func (service *InterviewServiceServerImpl) CreateConductedInterviewCall(ctx cont
 	if err != nil {
 		return nil, err
 	}
+
+	averageScore, averageRating, amountConducted, err := service.Database.GetInterviewTemplateStats(in.InterviewTemplateId)
+	if err != nil {
+		return nil, err
+	}
+
+	newScore, newRating, newAmountConducted, err := service.Database.UpdateInterviewTemplateStats(in.InterviewTemplateId, averageScore, averageRating, amountConducted, in.Score, in.Rating)
+	if err != nil {
+		return nil, err
+	}
+
+	err = service.Database.UpdateRoleAndCompanyInterviewTemplateId(in.Role, in.Company, gocql.UUID(in.InterviewTemplateId), newScore, newRating, newAmountConducted)
 
 	err = service.Database.InsertUserIdAndConductedInterviewId(in.UserId, conductedInterviewId)
 	if err != nil {

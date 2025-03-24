@@ -51,28 +51,37 @@ func (db *Database) CreateInterviewTemplate(
 	questions []string,
 	userId int32,
 ) (gocql.UUID, error) {
-	query := `
-	INSERT INTO interview_templates (
-		interview_template_id,
-		average_score,
-		average_rating,
-		amount_conducted,
-		company,
-		role,
-		skills,
-		description,
-		user_id,
-		questions
-	) VALUES (
-		?, -1, -1, 0, ?, ?, ?, ?, ?, ?
-	)
-	`
+	columns := []string{
+		"interview_template_id",
+		"average_score",
+		"average_rating",
+		"amount_conducted",
+		"company",
+		"role",
+		"skills",
+		"description",
+		"user_id",
+		"questions",
+	}
 
-	timeuuid := gocql.TimeUUID()
+	conditions := make([]string, 0, len(columns))
+	for range columns {
+		conditions = append(conditions, "?")
+	}
+
+	query := `INSERT INTO interview_templates (` + strings.Join(columns, ", ") + `) VALUES (` + strings.Join(conditions, ", ") + `)`
+
+	interviewTemplateId := gocql.TimeUUID()
+	averageScore := -1
+	averageRating := -1
+	amountConducted := 0
 
 	err := db.Session.Query(
 		query,
-		timeuuid,
+		interviewTemplateId,
+		averageScore,
+		averageRating,
+		amountConducted,
 		company,
 		role,
 		skills,
@@ -85,7 +94,7 @@ func (db *Database) CreateInterviewTemplate(
 		return gocql.UUID{}, err
 	}
 
-	return timeuuid, nil
+	return interviewTemplateId, nil
 }
 
 // Find single interview template by ID, or find a set of interview templates by multiple IDs
@@ -358,4 +367,105 @@ func (db *Database) InsertUserIdAndInterviewTemplateId(userId int32, interviewTe
 	}
 
 	return nil
+}
+
+// Inserts the role and company filtering tables
+func (db *Database) InsertRoleAndCompanyInterviewTemplateId(role string, company string, interviewTemplateId gocql.UUID) error {
+	columns := []string{"role", "company", "interview_template_id", "average_score"}
+	query := `INSERT INTO average_scores_by_role_and_company (` + strings.Join(columns, ", ") + `) VALUES ` + utils.GenerateConditions(columns)
+	err := db.Session.Query(
+		query, role, company, interviewTemplateId, -1,
+	).WithContext(db.Ctx).Exec()
+	if err != nil {
+		return err
+	}
+
+	columns = []string{"role", "company", "interview_template_id", "average_rating"}
+	query = `INSERT INTO average_ratings_by_role_and_company (` + strings.Join(columns, ", ") + `) VALUES ` + utils.GenerateConditions(columns)
+	err = db.Session.Query(
+		query, role, company, interviewTemplateId, -1,
+	).WithContext(db.Ctx).Exec()
+	if err != nil {
+		return err
+	}
+
+	columns = []string{"role", "company", "interview_template_id", "amount_conducted"}
+	query = `INSERT INTO amount_conducted_by_role_and_company (` + strings.Join(columns, ", ") + `) VALUES ` + utils.GenerateConditions(columns)
+	err = db.Session.Query(
+		query, role, company, interviewTemplateId, 0,
+	).WithContext(db.Ctx).Exec()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Target tables: average_scores_by_role_and_company, average_ratings_by_role_and_company, amount_conducted_by_role_and_company
+// Updates the role and company filtering tables
+func (db *Database) UpdateRoleAndCompanyInterviewTemplateId(role string, company string, interviewTemplateId gocql.UUID, averageScore int32, averageRating int32, amountConducted int32) error {
+	query := `UPDATE average_scores_by_role_and_company SET average_score = ? WHERE role = ? AND company = ? AND interview_template_id = ?`
+	err := db.Session.Query(
+		query, averageScore, role, company, interviewTemplateId,
+	).WithContext(db.Ctx).Exec()
+	if err != nil {
+		return err
+	}
+
+	query = `UPDATE average_ratings_by_role_and_company SET average_rating = ? WHERE role = ? AND company = ? AND interview_template_id = ?`
+	err = db.Session.Query(
+		query, averageRating, role, company, interviewTemplateId,
+	).WithContext(db.Ctx).Exec()
+	if err != nil {
+		return err
+	}
+
+	query = `UPDATE amount_conducted_by_role_and_company SET amount_conducted = ? WHERE role = ? AND company = ? AND interview_template_id = ?`
+	err = db.Session.Query(
+		query, amountConducted, role, company, interviewTemplateId,
+	).WithContext(db.Ctx).Exec()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Target tables: interview_templates
+// Get interview template statistics
+func (db *Database) GetInterviewTemplateStats(interviewTemplateId []byte) (averageScore int32, averageRating int32, amountConducted int32, err error) {
+	columns := []string{"average_score", "average_rating", "amount_conducted"}
+	query := `SELECT ` + strings.Join(columns, ", ") + ` FROM interview_templates WHERE interview_template_id = ?`
+
+	err = db.Session.Query(query, interviewTemplateId).WithContext(db.Ctx).Scan(
+		&averageScore,
+		&averageRating,
+		&amountConducted,
+	)
+	if err != nil {
+		return -1, -1, -1, err
+	}
+
+	return averageScore, averageRating, amountConducted, nil
+}
+
+// Target tables: interview_templates
+// Update interview template statistics given a single incoming score and rating and the existing statistics
+func (db *Database) UpdateInterviewTemplateStats(interviewTemplateId []byte, averageScore int32, averageRating int32, amountConducted int32, score int32, rating int32) (int32, int32, int32, error) {
+	if averageScore == -1 || averageRating == -1 {
+		averageScore = 0
+		averageRating = 0
+	}
+
+	newScore := (averageScore*amountConducted + score) / (amountConducted + 1)
+	newRating := (averageRating*amountConducted + rating) / (amountConducted + 1)
+	newAmountConducted := amountConducted + 1
+
+	query := `UPDATE interview_templates SET average_score = ?, average_rating = ?, amount_conducted = ? WHERE interview_template_id = ?`
+	err := db.Session.Query(query, newScore, newRating, newAmountConducted, interviewTemplateId).WithContext(db.Ctx).Exec()
+	if err != nil {
+		return -1, -1, -1, err
+	}
+
+	return newScore, newRating, newAmountConducted, nil
 }

@@ -97,7 +97,6 @@ func initializeCassandra(ctx context.Context) {
 	flag.Parse()
 	if *clearDb {
 		table.DropAllTables(db.Session, db.Ctx)
-		return
 	}
 
 	// Initialize table only for an empty database
