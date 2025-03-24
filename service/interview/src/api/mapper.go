@@ -27,6 +27,7 @@ func ConvertConductedInterviewToProto(conductedInterview *db.ConductedInterview)
 		Score:                conductedInterview.Score,
 		Rating:               conductedInterview.Rating,
 		Role:                 conductedInterview.Role,
+		Company:              conductedInterview.Company,
 		Responses: &ResponseType{
 			Feedback:  conductedInterview.Responses.Feedback,
 			Answers:   conductedInterview.Responses.Answers,

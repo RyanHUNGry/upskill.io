@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS conducted_interviews (
     score INT,
     user_id INT,
     role TEXT,
+    company TEXT,
     rating INT,
     responses frozen <response_type>,
     PRIMARY KEY (conducted_interview_id)

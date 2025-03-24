@@ -24,7 +24,7 @@ func init() {
 	client, grpcCloser, database = initTestServer(context.Background())
 }
 
-// Initialize test gRPC server and client, which communicates over an in-memory, buffered connection mimicking gRPC network communication
+// Initialize test gRPC server and client with an in-memory connection using a buffer
 func initTestServer(ctx context.Context) (InterviewServiceClient, func(), *db.Database) {
 	listenerBufferSize := 10 * 1024 * 1024 // 10 MB
 	lis := bufconn.Listen(listenerBufferSize)

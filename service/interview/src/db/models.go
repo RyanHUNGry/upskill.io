@@ -38,6 +38,7 @@ type ConductedInterview struct {
 	UserId               int32
 	Score                int32
 	Rating               int32
+	Company              string
 	Role                 string
 	Responses            ResponseType
 }
