@@ -40,7 +40,7 @@ func (service *InterviewServiceServerImpl) CreateInterviewTemplateCall(ctx conte
 func (service *InterviewServiceServerImpl) CreateConductedInterviewCall(ctx context.Context, in *CreateConductedInterview) (*ConductedInterview, error) {
 	respType := db.ResponseType{Feedback: in.Responses.Feedback, Answers: in.Responses.Answers, Questions: in.Responses.Questions}
 
-	conductedInterviewId, err := service.Database.CreateConductedIntervew(in.InterviewTemplateId, in.UserId, in.Score, in.Rating, in.Role, respType)
+	conductedInterviewId, err := service.Database.CreateConductedInterview(in.InterviewTemplateId, in.UserId, in.Score, in.Rating, in.Role, in.Company, respType)
 	if err != nil {
 		return nil, err
 	}

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"interview/src/api"
 	"interview/src/db"
-	"interview/src/db/table"
 	"interview/src/producer"
 	"interview/src/utils"
 	"log"
@@ -35,7 +34,7 @@ var (
 )
 
 func main() {
-	// Trap SIGINT to gracefully shutdown, propagating signal via context
+	// Trap SIGINT to gracefully shutdown, propagating signal via context to other goroutines
 	rootCtx := context.Background()
 	signal.Notify(sigIntChannel, syscall.SIGINT)
 	ctx, cancel := context.WithCancel(rootCtx)
@@ -57,9 +56,10 @@ func main() {
 	<-sigIntChannel
 	cancel()
 	fmt.Println("Shutting down gracefully...")
-	time.Sleep(2 * time.Second)
+	time.Sleep(750 * time.Millisecond)
 }
 
+// Initialize Kafka producer
 func initializeKafka(ctx context.Context) {
 	// Kafka in Docker runs with latest 4.0.0 image version
 	kafkaVersion := sarama.MaxVersion
@@ -82,6 +82,7 @@ func initializeKafka(ctx context.Context) {
 	}
 }
 
+// Initialize Cassandra connection
 func initializeCassandra(ctx context.Context) {
 	cassandraHost := os.Getenv("CASSANDRA_HOST")
 	cassandraPort := os.Getenv("CASSANDRA_PORT")
@@ -96,11 +97,13 @@ func initializeCassandra(ctx context.Context) {
 	clearDb := flag.Bool("c", false, "Clear all tables")
 	flag.Parse()
 	if *clearDb {
-		table.DropAllTables(db.Session, db.Ctx)
+		db.DropAllTables()
 	}
 
-	// Initialize table only for an empty database
-	table.InitializeTables(db.Session, db.Ctx)
+	err = db.InitializeTables()
+	if err != nil {
+		log.Fatalf("Error initializing tables: %v", err)
+	}
 	fmt.Println("Cassandra initialized ✅")
 
 	select {

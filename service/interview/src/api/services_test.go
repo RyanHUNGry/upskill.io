@@ -37,7 +37,7 @@ func initTestServer(ctx context.Context) (InterviewServiceClient, func(), *db.Da
 		grpcServer := grpc.NewServer(serverOpts...)
 
 		dbSession, err := db.Connect("localhost", "9042", ctx)
-		table.InitializeTables(dbSession.Session, ctx)
+		db.InitializeTables(dbSession.Session, ctx)
 
 		if err != nil {
 			log.Printf("error connecting to database: %v", err)

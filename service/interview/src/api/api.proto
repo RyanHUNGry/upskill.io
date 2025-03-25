@@ -8,7 +8,6 @@ service InterviewService {
     rpc CreateConductedInterviewCall(CreateConductedInterview) returns (ConductedInterview) {}
     rpc GetConductedInterviewsByUserCall(GetConductedInterviewsByUser) returns (ConductedInterviews) {}
     rpc GetInterviewTemplatesByUserCall(GetInterviewTemplatesByUser) returns (InterviewTemplates) {}
-    rpc GetAverageScoresByRollAndCompany(RoleAndCompany) returns 
 }
 
 message CreateInterviewTemplate {
@@ -81,13 +80,4 @@ message RoleAndCompany {
     string role = 1;
     string company = 2;
     optional bytes interview_template_id = 3;
-}
-
-message AverageScoresByRoleAndCompany {
-    oneof {
-        string role = 1;
-        string company = 2;
-        bytes interview_template_id = 3;
-        int32 average_score = 4;
-    } can't have repeated though...
 }

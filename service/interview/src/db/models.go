@@ -179,12 +179,13 @@ func (db *Database) FindInterviewTemplateById(interviewTemplateId any) (*Intervi
 	}
 }
 
-func (db *Database) CreateConductedIntervew(
+func (db *Database) CreateConductedInterview(
 	interviewTemplateId []byte,
 	userId int32,
 	score int32,
 	rating int32,
 	role string,
+	company string,
 	responses ResponseType,
 ) (gocql.UUID, error) {
 	query := `
