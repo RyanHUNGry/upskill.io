@@ -1,3 +1,5 @@
+// migrate to a testing package
+
 package api
 
 import (
@@ -24,7 +26,15 @@ func init() {
 	client, grpcCloser, database = initTestServer(context.Background())
 }
 
-// Initialize test gRPC server and client with an in-memory connection using a buffer
+// func initializeGrpc() {
+// 	listenerBufferSize := 10 * 1024 * 1024
+// 	lis := bufconn.Listen(listenerBufferSize)
+// 	serverOpts := []grpc.ServerOption{}
+// 	grpcServer := grpc.NewServer(serverOpts...)
+// 	interviewServiceServerImpl := &InterviewServiceServerImpl{Database: dbSession}
+// }
+
+// Initialize in-memory gRPC server, Cassandra database, and Kafka producer for testing
 func initTestServer(ctx context.Context) (InterviewServiceClient, func(), *db.Database) {
 	listenerBufferSize := 10 * 1024 * 1024 // 10 MB
 	lis := bufconn.Listen(listenerBufferSize)

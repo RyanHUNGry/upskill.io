@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"interview/src/api"
 	"interview/src/db"
+	"interview/src/llm"
 	"interview/src/producer"
 	"interview/src/utils"
 	"log"
@@ -30,6 +31,7 @@ import (
 var (
 	databaseChannel chan *db.Database               = make(chan *db.Database)
 	producerChannel chan producer.AsyncLogGenerator = make(chan producer.AsyncLogGenerator)
+	modelChannel    chan *llm.Model                 = make(chan *llm.Model)
 	sigIntChannel   chan os.Signal                  = make(chan os.Signal, 1)
 )
 
@@ -51,12 +53,20 @@ func main() {
 	go initializeKafka(ctx)
 	go initializeGrpc(ctx)
 	go initializeCassandra(ctx)
+	go initializeModel(ctx)
 
 	// Under the hood, cancel() calls close(ctx.Done()) which causes <-ctx.Done() to return a value immediately
 	<-sigIntChannel
 	cancel()
 	fmt.Println("Shutting down gracefully...")
 	time.Sleep(750 * time.Millisecond)
+}
+
+// Initialize OpenAI model
+func initializeModel(ctx context.Context) {
+	model := llm.InitializeModel(ctx)
+	modelChannel <- model
+	fmt.Println("Model initialized ✅")
 }
 
 // Initialize Kafka producer
@@ -181,7 +191,7 @@ func initializeGrpc(ctx context.Context) {
 		})
 	}
 
-	// For verbosity reasons only as defaults options log gRPC from start to finish
+	// For verbosity reasons as defaults options log gRPC from start to finish
 	var loggingOption []logging.Option = []logging.Option{
 		logging.WithLogOnEvents(logging.StartCall, logging.FinishCall),
 	}
@@ -194,6 +204,7 @@ func initializeGrpc(ctx context.Context) {
 	grpcServer := grpc.NewServer(serverOption...)
 	interviewServiceImpl := &api.InterviewServiceServerImpl{
 		Database: <-databaseChannel,
+		Model:    <-modelChannel,
 	}
 	api.RegisterInterviewServiceServer(grpcServer, interviewServiceImpl)
 	fmt.Println("gRPC Server initialized ✅")

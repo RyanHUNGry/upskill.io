@@ -23,6 +23,7 @@ const (
 	InterviewService_CreateConductedInterviewCall_FullMethodName     = "/api.InterviewService/CreateConductedInterviewCall"
 	InterviewService_GetConductedInterviewsByUserCall_FullMethodName = "/api.InterviewService/GetConductedInterviewsByUserCall"
 	InterviewService_GetInterviewTemplatesByUserCall_FullMethodName  = "/api.InterviewService/GetInterviewTemplatesByUserCall"
+	InterviewService_ConductInterviewCall_FullMethodName             = "/api.InterviewService/ConductInterviewCall"
 )
 
 // InterviewServiceClient is the client API for InterviewService service.
@@ -33,6 +34,7 @@ type InterviewServiceClient interface {
 	CreateConductedInterviewCall(ctx context.Context, in *CreateConductedInterview, opts ...grpc.CallOption) (*ConductedInterview, error)
 	GetConductedInterviewsByUserCall(ctx context.Context, in *GetConductedInterviewsByUser, opts ...grpc.CallOption) (*ConductedInterviews, error)
 	GetInterviewTemplatesByUserCall(ctx context.Context, in *GetInterviewTemplatesByUser, opts ...grpc.CallOption) (*InterviewTemplates, error)
+	ConductInterviewCall(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ConductInterviewRequest, ConductInterviewResponse], error)
 }
 
 type interviewServiceClient struct {
@@ -83,6 +85,19 @@ func (c *interviewServiceClient) GetInterviewTemplatesByUserCall(ctx context.Con
 	return out, nil
 }
 
+func (c *interviewServiceClient) ConductInterviewCall(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ConductInterviewRequest, ConductInterviewResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &InterviewService_ServiceDesc.Streams[0], InterviewService_ConductInterviewCall_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[ConductInterviewRequest, ConductInterviewResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type InterviewService_ConductInterviewCallClient = grpc.BidiStreamingClient[ConductInterviewRequest, ConductInterviewResponse]
+
 // InterviewServiceServer is the server API for InterviewService service.
 // All implementations must embed UnimplementedInterviewServiceServer
 // for forward compatibility.
@@ -91,6 +106,7 @@ type InterviewServiceServer interface {
 	CreateConductedInterviewCall(context.Context, *CreateConductedInterview) (*ConductedInterview, error)
 	GetConductedInterviewsByUserCall(context.Context, *GetConductedInterviewsByUser) (*ConductedInterviews, error)
 	GetInterviewTemplatesByUserCall(context.Context, *GetInterviewTemplatesByUser) (*InterviewTemplates, error)
+	ConductInterviewCall(grpc.BidiStreamingServer[ConductInterviewRequest, ConductInterviewResponse]) error
 	mustEmbedUnimplementedInterviewServiceServer()
 }
 
@@ -112,6 +128,9 @@ func (UnimplementedInterviewServiceServer) GetConductedInterviewsByUserCall(cont
 }
 func (UnimplementedInterviewServiceServer) GetInterviewTemplatesByUserCall(context.Context, *GetInterviewTemplatesByUser) (*InterviewTemplates, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInterviewTemplatesByUserCall not implemented")
+}
+func (UnimplementedInterviewServiceServer) ConductInterviewCall(grpc.BidiStreamingServer[ConductInterviewRequest, ConductInterviewResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method ConductInterviewCall not implemented")
 }
 func (UnimplementedInterviewServiceServer) mustEmbedUnimplementedInterviewServiceServer() {}
 func (UnimplementedInterviewServiceServer) testEmbeddedByValue()                          {}
@@ -206,6 +225,13 @@ func _InterviewService_GetInterviewTemplatesByUserCall_Handler(srv interface{}, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InterviewService_ConductInterviewCall_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(InterviewServiceServer).ConductInterviewCall(&grpc.GenericServerStream[ConductInterviewRequest, ConductInterviewResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type InterviewService_ConductInterviewCallServer = grpc.BidiStreamingServer[ConductInterviewRequest, ConductInterviewResponse]
+
 // InterviewService_ServiceDesc is the grpc.ServiceDesc for InterviewService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -230,6 +256,13 @@ var InterviewService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _InterviewService_GetInterviewTemplatesByUserCall_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ConductInterviewCall",
+			Handler:       _InterviewService_ConductInterviewCall_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "api.proto",
 }

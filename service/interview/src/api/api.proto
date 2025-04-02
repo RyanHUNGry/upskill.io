@@ -8,6 +8,7 @@ service InterviewService {
     rpc CreateConductedInterviewCall(CreateConductedInterview) returns (ConductedInterview) {}
     rpc GetConductedInterviewsByUserCall(GetConductedInterviewsByUser) returns (ConductedInterviews) {}
     rpc GetInterviewTemplatesByUserCall(GetInterviewTemplatesByUser) returns (InterviewTemplates) {}
+    rpc ConductInterviewCall(stream ConductInterviewRequest) returns (stream ConductInterviewResponse) {}
 }
 
 message CreateInterviewTemplate {
@@ -76,8 +77,23 @@ message GetInterviewTemplatesByUser {
     int32 user_id = 1;
 }
 
-message RoleAndCompany {
-    string role = 1;
-    string company = 2;
-    optional bytes interview_template_id = 3;
+message ConductInterviewRequest {
+    message InitialRequest {
+        bytes interview_template_id = 1;
+        optional int32 num_questions_to_generate = 2;
+        int32 user_id = 4;
+    }
+
+    message FinalRequest {
+        int32 rating = 1;
+    }
+
+    optional string answer = 1;
+    optional InitialRequest initial_request = 2;
+    optional FinalRequest final_request = 3;
+}
+
+message ConductInterviewResponse {
+    string question = 1;
+    optional CreateConductedInterview create_conducted_interview = 2;
 }

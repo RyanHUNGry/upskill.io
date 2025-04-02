@@ -113,6 +113,11 @@ func (db *Database) FindInterviewTemplateById(interviewTemplateId any) (*Intervi
 		"user_id",
 	}
 
+	// Convert byte slice to UUID type
+	if v, ok := interviewTemplateId.([]byte); ok {
+		interviewTemplateId = gocql.UUID(v)
+	}
+
 	if _, ok := interviewTemplateId.(gocql.UUID); ok {
 		interviewTemplateId := interviewTemplateId.(gocql.UUID)
 		query := `SELECT ` + strings.Join(columns, ", ") + ` FROM interview_templates WHERE interview_template_id = ?`
