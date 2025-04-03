@@ -2,12 +2,14 @@ package api
 
 import (
 	context "context"
+	"fmt"
 	"interview/src/db"
 	"interview/src/llm"
 	"interview/src/utils"
 	"io"
 
 	"github.com/gocql/gocql"
+	"github.com/openai/openai-go/responses"
 )
 
 type InterviewServiceServerImpl struct {
@@ -112,22 +114,33 @@ func (service InterviewServiceServerImpl) ConductInterviewCall(stream InterviewS
 
 	questionIdx := 0
 	numQuestionsGenerated := 0
-	generatedQuestions := make([]string, 0)
+	questions := make([]string, 0)
 	answers := make([]string, 0)
+	feedback := make([]string, 0)
+	var prevResponse *responses.Response
 
 	for {
 		conductInterviewRequest, err := stream.Recv()
 		// The io.EOF error is returned when the client closes the stream, which programmatically happens when FinalRequest field is populated
 		if err == io.EOF {
+			fmt.Println(userId, rating)
 			if err := stream.Send(finalConductInterviewResponse); err != nil {
 				return err
 			}
 			return nil
 		}
 
-		// The user can send a final request, which provides a rating for the conducted interview followed by a stream cancellation
-		// The user can send an initial request, specifying the user ID and number of questions to generate in addition to predefined questions
-		// The user can send their answer to a question, which is scored by the LLM and provides context for the next question
+		/*
+			1. User sends an initial request to provide contextual information
+				- Generates an initial question
+			2. User sends an answer, which answers the previous question. This is then scored
+				- A second question, based on the feedback and the answer, is then generated
+			3. Once user is done answering all questions, they send a final request to signal the end of the interview
+				- Followed by a cancellation signal, which closes the stream
+
+			Any predefined questions must be manually embedded in the context window of the model
+			Otherwise, the previous model response ID is tracked and used for the context window
+		*/
 		if conductInterviewRequest.FinalRequest != nil {
 			rating = conductInterviewRequest.FinalRequest.Rating
 		} else if conductInterviewRequest.InitialRequest != nil {
@@ -138,17 +151,23 @@ func (service InterviewServiceServerImpl) ConductInterviewCall(stream InterviewS
 				return err
 			}
 
-			// Provide the initial question, meaning there is no answer yet
+			// Provide the initial question, and expect an initial answer in the following client request
 			var question string
 			if questionIdx < len(interviewTemplate.Questions) {
 				question = interviewTemplate.Questions[questionIdx]
 				questionIdx += 1
 			} else if numQuestionsGenerated < int(*numQuestionsToGenerate) {
-				question = "Can you tell me about yourself?"
+				res, err := service.Model.GenerateQuestion(interviewTemplate.Role, interviewTemplate.Company, interviewTemplate.Description, interviewTemplate.Skills, nil)
+				if err != nil {
+					return err
+				}
+
+				prevResponse = res
+				question = res.Output[0].Content[0].Text
 				numQuestionsGenerated += 1
-				generatedQuestions = append(generatedQuestions, question)
 			}
 
+			questions = append(questions, question)
 			if err := stream.Send(&ConductInterviewResponse{Question: question}); err != nil {
 				return err
 			}
@@ -156,17 +175,32 @@ func (service InterviewServiceServerImpl) ConductInterviewCall(stream InterviewS
 			answer := *conductInterviewRequest.Answer
 			answers = append(answers, answer)
 
+			// After answering, generate feedback for the previous question
+			prevQuestion := questions[len(questions)-1]
+			res, err := service.Model.GenerateFeedback(interviewTemplate.Role, interviewTemplate.Company, interviewTemplate.Description, interviewTemplate.Skills, prevQuestion, answer, prevResponse)
+			if err != nil {
+				return err
+			}
+
+			fb := res.Output[0].Content[0].Text
+			feedback = append(feedback, fb)
+			fmt.Println(fb)
+
+			// Generate the new question based on the feedback and the answer
 			var question string
 			if questionIdx < len(interviewTemplate.Questions) {
 				question = interviewTemplate.Questions[questionIdx]
 				questionIdx += 1
 			} else if numQuestionsGenerated < int(*numQuestionsToGenerate) {
-				question = "Can you tell me about yourself?"
-				numQuestionsGenerated += 1
-				generatedQuestions = append(generatedQuestions, question)
-			}
+				res, err := service.Model.GenerateQuestion(interviewTemplate.Role, interviewTemplate.Company, interviewTemplate.Description, interviewTemplate.Skills, prevResponse)
+				if err != nil {
+					return err
+				}
 
-			service.Model.GenerateFeedback(question, answer)
+				question = res.Output[0].Content[0].Text
+				numQuestionsGenerated += 1
+				questions = append(questions, question)
+			}
 
 			if err := stream.Send(&ConductInterviewResponse{Question: question}); err != nil {
 				return err
